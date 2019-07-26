@@ -1,4 +1,4 @@
-# ARPESGUI: An ARPES data analysis code in MATLAB
+# ARPES-GUI: An ARPES data analysis code in MATLAB
 
 A MATLAB GUI used for the analysis of soft x-ray angle-resolved photoemission spectroscopy (SX-ARPES) experiments that give direct access to the electronic band-structure of a material. Designed to be directly compatible with the data format of SX-ARPES experiments at the ADRESS beamline, at the Swiss Light Source (SLS) in the Paul Scherrer Institute (PSI), but can be generalised to other data formats if required.
 
