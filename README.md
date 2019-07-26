@@ -32,14 +32,14 @@ MATLAB version:   2019a
 MATLAB add-ons:   Curve Fitting Toolbox  
 
 ## Authors  
-ARPESGUI & LCNTools:
-Procopios Constantinou,  
+ARPESGUI & LCNTools:  
+**Procopios Constantinou**,  
 London Centre for Nanotechnology (LCN),  
 University College London (UCL).  
 email: procopios.constantinou.16@ucl.ac.uk 
 
 MATools functions:  
-Vladimir Strocov,  
+**Vladimir Strocov**,  
 Swiss Light Source (SLS),  
 Paul Scherrer Institute (PSI),  
 email: vladimir.strocov@psi.ch
