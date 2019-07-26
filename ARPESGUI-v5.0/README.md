@@ -1,4 +1,4 @@
--- UPDATE LOG
+## Log of updates to ARPESGUI
 v5.0 - 06.02.2019 - Further development of the 'arpes_statefitting' UI;
 	-> Added Voigt curve that can be fitted.
 v4.0 - 18.12.2018 - Further development of the 'arpes_statefitting' UI;
@@ -12,5 +12,4 @@ v2.0 - 05.11.2018 - Developed the 'arpes_processor' UI.
 v1.0 - 10.10.2018 - Single GUI to perform all processing and analysis.
 
 
--- KNOWN BUGS
-
+## List of known bugs
