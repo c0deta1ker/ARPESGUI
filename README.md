@@ -27,11 +27,9 @@ Allows the user to load in single or multiple processed ARPES data-files so that
 Allows the user to walk through all of the fitting steps to parabolic features within ARPES spectra. The 1st stage is to load in the ARPES data, and perform any pre-fitting corrections (energy re-alignment, resampling, filtering and cropping). The 2nd stage is to crop around the region of interest and also some reference background with the same density of points. The option for polynomial background subtraction is also available using the reference background. The 3rd stage is to the perform the fitting to the parabolic feature using several different approaches and routines. The Fermi-Dirac distribution can be defined and used within the fitting constraints. A parabolic approximation can be set, whose parabolic trail can be used as a constraint to the fitting parameters to allow the solution to converge easier. Various constraints can also be placed on EDC and MDC cuts through the region of interest, but through trial-and-error, the best solution can be found.
 
 
-## Version control
-
+## Version control  
 MATLAB version:   2019a  
-MATLAB add-ons:   Curve Fitting Toolbox
-
+MATLAB add-ons:   Curve Fitting Toolbox  
 
 ## Authors  
 ARPESGUI & LCNTools:
@@ -40,16 +38,14 @@ London Centre for Nanotechnology (LCN),
 University College London (UCL).  
 email: procopios.constantinou.16@ucl.ac.uk 
 
-MATools:
-Vladimir Strocov,
-Swiss Light Source (SLS),
-Paul Scherrer Institute (PSI),
+MATools functions:  
+Vladimir Strocov,  
+Swiss Light Source (SLS),  
+Paul Scherrer Institute (PSI),  
 email: vladimir.strocov@psi.ch
 
-## License . 
+## License  
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Acknowledgments
 
 
 --PCC Jul. 2019
