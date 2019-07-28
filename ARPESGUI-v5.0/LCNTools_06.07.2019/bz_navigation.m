@@ -1859,15 +1859,15 @@ disp('-> Extracting k-space ARPES scan line...')
 tht = linspace(-8, 8, 5e2);
 if length(navi_args.hv) == 1
     surfNormX = SurfNormX(navi_args.hv, navi_args.eBref, navi_args.kxref, navi_args.thtM, navi_args.thtAref);
-    kx = Kx(navi_args.hv, navi_args.eBref, navi_args.thtM, tht, surfNormX);
-    kz = Kz(navi_args.hv, navi_args.eBref, navi_args.thtM, tht, navi_args.tltM, navi_args.V000, surfNormX);
+    kx = Kxx(navi_args.hv, navi_args.eBref, navi_args.thtM, tht, surfNormX);
+    kz = Kzz(navi_args.hv, navi_args.eBref, navi_args.thtM, tht, navi_args.tltM, navi_args.V000, surfNormX);
 elseif length(navi_args.hv) == 2
     surfNormX(1,:) = SurfNormX(navi_args.hv(1), navi_args.eBref, navi_args.kxref, navi_args.thtM, navi_args.thtAref);
-    kx(1,:) = Kx(navi_args.hv(1), navi_args.eBref, navi_args.thtM, tht, surfNormX(1,:));
-    kz(1,:) = Kz(navi_args.hv(1), navi_args.eBref, navi_args.thtM, tht, navi_args.tltM, navi_args.V000, surfNormX(1,:));
+    kx(1,:) = Kxx(navi_args.hv(1), navi_args.eBref, navi_args.thtM, tht, surfNormX(1,:));
+    kz(1,:) = Kzz(navi_args.hv(1), navi_args.eBref, navi_args.thtM, tht, navi_args.tltM, navi_args.V000, surfNormX(1,:));
     surfNormX(2,:) = SurfNormX(navi_args.hv(2), navi_args.eBref, navi_args.kxref, navi_args.thtM, navi_args.thtAref);
-    kx(2,:) = Kx(navi_args.hv(2), navi_args.eBref, navi_args.thtM, tht, surfNormX(2,:));
-    kz(2,:) = Kz(navi_args.hv(2), navi_args.eBref, navi_args.thtM, tht, navi_args.tltM, navi_args.V000, surfNormX(2,:));
+    kx(2,:) = Kxx(navi_args.hv(2), navi_args.eBref, navi_args.thtM, tht, surfNormX(2,:));
+    kz(2,:) = Kzz(navi_args.hv(2), navi_args.eBref, navi_args.thtM, tht, navi_args.tltM, navi_args.V000, surfNormX(2,:));
 end
 %% 1.2 - Extracting the kz-broadening
 eKE = navi_args.hv - navi_args.ePhi + navi_args.eBref;

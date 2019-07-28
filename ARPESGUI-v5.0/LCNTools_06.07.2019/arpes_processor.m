@@ -22,7 +22,7 @@ function varargout = arpes_processor(varargin)
 
 % Edit the above text to modify the response to help arpes_processor
 
-% Last Modified by GUIDE v2.5 05-Jun-2019 16:47:04
+% Last Modified by GUIDE v2.5 28-Jul-2019 20:13:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,8 +56,8 @@ function arpes_processor_OpeningFcn(hObject, ~, handles, varargin)
 handles.output = hObject;
 %% 1 - Setting the native size of the whole GUI figure
 screen_size = get(0,'ScreenSize');
-screen_size(3) = 520;
-screen_size(4) = 590;
+screen_size(3) = 800;
+screen_size(4) = 415;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_processor');
 %% 2 - Setting push-buttons to inactive
 set(handles.pushbutton_SAVE, 'Enable', 'off');
@@ -166,8 +166,8 @@ screen_size = get(0, 'ScreenSize');
 screen_pos = get(gcf, 'Position');
 screen_size(1) = screen_pos(1);
 screen_size(2) = screen_pos(2);
-screen_size(3) = 520;
-screen_size(4) = 590;
+screen_size(3) = 800;
+screen_size(4) = 415;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_processor');
 %% Update handles structure
 guidata(hObject, handles);
@@ -824,7 +824,7 @@ if handles.view3D_args{1} == "eb(k) video"
     default_data = sort([min(handles.myData.(zField)(:)), max(handles.myData.(zField)(:))]);
     default_data = round(default_data,2);
     set(handles.edit_3DLimits,'String', string(default_data(1) + ":" + default_data(2))); 
-elseif handles.view3D_args{1} == "eb(k) zoomed video"
+elseif handles.view3D_args{1} == "eb(k) roi video"
     set(handles.statictext_3dLimits,'String', "[k0:k1,eb0:eb1]:");
     default_data = [min(handles.myData.(xField)(:)), max(handles.myData.(xField)(:)), min(handles.myData.(yField)(:)), max(handles.myData.(yField)(:))];
     default_data = round(default_data,2);
@@ -897,9 +897,9 @@ if handles.view3D_args{1} == "eb(k) video"
         if data_entry(1) < min(handles.myData.(zField)(:)) || data_entry(1) > max(handles.myData.(zField)(:)); data_entry(1) = min(handles.myData.(zField)(:)); end
         if data_entry(2) < min(handles.myData.(zField)(:)) || data_entry(2) > max(handles.myData.(zField)(:)); data_entry(2) = max(handles.myData.(zField)(:)); end
     end
-% - Validity check for 'eb(k) zoomed video' plot
-elseif handles.view3D_args{1} == "eb(k) zoomed video"
-    video_type = "--> eb(k) zoomed video; zoom in on [k0:k1,eb0:eb1]: ";
+% - Validity check for 'eb(k) roi video' plot
+elseif handles.view3D_args{1} == "eb(k) roi video"
+    video_type = "--> eb(k) roi video; zoom in on [k0:k1,eb0:eb1]: ";
     if isempty(data_entry) || length(data_entry) > 4 || length(data_entry) < 4 || size(data_entry, 1) > 1
         data_entry = [min(handles.myData.(xField)(:)), max(handles.myData.(xField)(:)), min(handles.myData.(yField)(:)), max(handles.myData.(yField)(:))];
     else
@@ -1084,7 +1084,7 @@ if handles.view3D_args{1} == "3d cube"
 elseif handles.view3D_args{1} == "eb(k) video"
     view_ebkvideo(handles.myData, handles.view3D_args);
 % - 1.3 - Path for Eb(k) vs scan parameter video with a zoom in
-elseif handles.view3D_args{1} == "eb(k) zoomed video"
+elseif handles.view3D_args{1} == "eb(k) roi video"
     view_ebkvideo_zoom(handles.myData, handles.view3D_args);
 % - 1.4 - Path for IsoE or isoK slice video of the data
 elseif handles.view3D_args{1} == "isoe video" || handles.view3D_args{1} == "isok video"
@@ -1577,7 +1577,7 @@ if isempty(data_entry) ||  length(data_entry) == 1 || length(data_entry) > 2
 elseif length(data_entry) == 2
     % -- Forcing the max / min limits on the entries
     if data_entry(1) < min_eWin || data_entry(1) > max_eWin; data_entry(1) = min_eWin; end
-    if data_entry(2) < min_eWin || data_entry(2) > max_eWin; data_entry(2) = 0; end
+    if data_entry(2) < min_eWin || data_entry(2) > max_eWin; data_entry(2) = max_eWin; end
 end
 %% 3 - Assigning output and printing change
 handles.norm_args{2} = sort(round(data_entry,2));
@@ -2662,9 +2662,9 @@ function dataStr = convert_to_k(dataStr, kconv_args)
 %   REQ. FUNCTIONS:
 %   -   [xField, yField, zField, dField] = find_data_fields(dataStr);
 %   -   surfNormX = SurfNormX(hv, eB_ref, kx_ref, thtM, thtA_ref) calculates the surface normal angle in the MP.
-%   -   Kxx = Kx(HV, Eb, thtM, ThtA, surfNormX) calculates k// in the MP.
-%   -   Kyy = Ky(HV, Eb, thtM, TltM, surfNormX) calculates k// in the MP.
-%   -   Kzz = Kz(HV, Eb, thtM, ThtA, TltM, v000, surfNormX) calculates kz along the surface normal.
+%   -   Kxx = Kxx(HV, Eb, thtM, ThtA, surfNormX) calculates k// in the MP.
+%   -   Kyy = Kyy(HV, Eb, thtM, TltM, surfNormX) calculates k// in the MP.
+%   -   Kzz = Kzz(HV, Eb, thtM, ThtA, TltM, v000, surfNormX) calculates kz along the surface normal.
 %
 %   IN:
 %   -   dataStr:          data structure of the ARPES data.
@@ -2693,9 +2693,9 @@ if dataStr.Type == "Eb(k)"
     if length(thtA_ref) == 2; thtA_ref = thtA_ref(1); end
     waitbar(0.5, wbar, 'Executing Eb(k) wave-vector conversions...', 'Name', 'convert_to_k');
     dataStr.surfNormX = SurfNormX(dataStr.hv, eB_ref, kx_ref, dataStr.thtM, thtA_ref);
-    dataStr.kx = Kx(dataStr.hv, dataStr.eb, dataStr.thtM, dataStr.tht, dataStr.surfNormX);
-    dataStr.ky = Ky(dataStr.hv, dataStr.eb, dataStr.thtM, dataStr.tltM, dataStr.surfNormX);
-    dataStr.kz = Kz(dataStr.hv, dataStr.eb, dataStr.thtM, dataStr.tht, dataStr.tltM, v000, dataStr.surfNormX);
+    dataStr.kx = Kxx(dataStr.hv, dataStr.eb, dataStr.thtM, dataStr.tht, dataStr.surfNormX);
+    dataStr.ky = Kyy(dataStr.hv, dataStr.eb, dataStr.tht, dataStr.thtM, dataStr.tltM, dataStr.surfNormX);
+    dataStr.kz = Kzz(dataStr.hv, dataStr.eb, dataStr.thtM, dataStr.tht, dataStr.tltM, v000, dataStr.surfNormX);
     % Finding the mean value of ky and kz
     dataStr.ky = mean(dataStr.ky(:));
     dataStr.kz = mean(dataStr.kz(:));
@@ -2708,9 +2708,9 @@ elseif dataStr.Type == "Eb(kx,ky)"
     for i = 1:size(dataStr.tltM, 2)
         waitbar(i/size(dataStr.tltM, 2), wbar, 'Executing Eb(kx,ky) wave-vector conversions...', 'Name', 'convert_to_k');
         dataStr.surfNormX(i) = SurfNormX(dataStr.hv, eB_ref, kx_ref, dataStr.thtM, thtA_ref(i));
-        dataStr.kx(:,:,i) = Kx(dataStr.hv, dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.surfNormX(i));
-        dataStr.ky(:,:,i) = Ky(dataStr.hv, dataStr.eb(:,:,i), dataStr.thtM, dataStr.tltM(i), dataStr.surfNormX(i));
-        dataStr.kz(:,:,i) = Kz(dataStr.hv, dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.tltM(i), v000, dataStr.surfNormX(i));
+        dataStr.kx(:,:,i) = Kxx(dataStr.hv, dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.surfNormX(i));
+        dataStr.ky(:,:,i) = Kyy(dataStr.hv, dataStr.eb(:,:,i), dataStr.tht(:,:,i), dataStr.thtM, dataStr.tltM(i), dataStr.surfNormX(i));
+        dataStr.kz(:,:,i) = Kzz(dataStr.hv, dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.tltM(i), v000, dataStr.surfNormX(i));
     end
 
 % - 2.3 Wave-vector conversions for Eb(kx,kz)
@@ -2721,9 +2721,9 @@ elseif dataStr.Type == "Eb(kx,kz)"
     for i = 1:size(dataStr.hv, 2)
         waitbar(i/size(dataStr.hv, 2), wbar, 'Executing Eb(kx,kz) wave-vector conversions...', 'Name', 'convert_to_k');
         dataStr.surfNormX(i) = SurfNormX(dataStr.hv(i), eB_ref, kx_ref, dataStr.thtM, thtA_ref(i));
-        dataStr.kx(:,:,i) = Kx(dataStr.hv(i), dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.surfNormX(i));
-        dataStr.ky(:,:,i) = Ky(dataStr.hv(i), dataStr.eb(:,:,i), dataStr.thtM, dataStr.tltM, dataStr.surfNormX(i));
-        dataStr.kz(:,:,i) = Kz(dataStr.hv(i), dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.tltM, v000, dataStr.surfNormX(i));
+        dataStr.kx(:,:,i) = Kxx(dataStr.hv(i), dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.surfNormX(i));
+        dataStr.ky(:,:,i) = Kyy(dataStr.hv(i), dataStr.eb(:,:,i), dataStr.tht(:,:,i), dataStr.thtM, dataStr.tltM, dataStr.surfNormX(i));
+        dataStr.kz(:,:,i) = Kzz(dataStr.hv(i), dataStr.eb(:,:,i), dataStr.thtM, dataStr.tht(:,:,i), dataStr.tltM, v000, dataStr.surfNormX(i));
     end
 end
 %% Close wait-bar

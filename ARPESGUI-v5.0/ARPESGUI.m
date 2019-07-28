@@ -56,7 +56,7 @@ function ARPESGUI_OpeningFcn(hObject, ~, handles, varargin)
 %% 1 - Setting the native size of the whole GUI figure
 screen_size = get(0,'ScreenSize');
 screen_size(3) = 400;
-screen_size(4) = 405;
+screen_size(4) = 375;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'ARPESGUI');
 %% Choose default command line output for ARPESGUI
 handles.output = hObject;
@@ -106,7 +106,7 @@ screen_pos = get(gcf, 'Position');
 screen_size(1) = screen_pos(1);
 screen_size(2) = screen_pos(2);
 screen_size(3) = 400;
-screen_size(4) = 405;
+screen_size(4) = 375;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'ARPESGUI');
 %% Update handles structure
 guidata(hObject, handles);
@@ -120,23 +120,11 @@ function pushbutton_VIEWIMFP_Callback(hObject, ~, handles)
 eKE = linspace(1, 1e5, 1e5);
 imfp_th = 10 .* (143 ./ eKE .^2 + 0.054.*sqrt(eKE));
 dkz_th = 1 ./ imfp_th;
-%% 2 - Extracting the Si IMFP curve
-imfp_si = dlmread('imfp_si.txt',' ',1,0);
-eKE_si = imfp_si(:,1);
-imfp_si = 10.*imfp_si(:,2);
-%% 3 - Extracting the SiO2 IMFP curve
-imfp_sio2 = dlmread('imfp_sio2.txt',' ',1,0);
-eKE_sio2 = imfp_sio2(:,1);
-imfp_sio2 = 10.*imfp_sio2(:,2);
-%% 4 - Plotting a summary of the IMFP curves
-fig = figure(); set(fig, 'Name', 'IMFP curves');
+%% 2 - Plotting a summary of the IMFP curves
+fig = figure(); set(fig, 'Name', 'IMFP curve');
 %-Plotting the figure for the Si IMFP 
 loglog(eKE, imfp_th, '-', 'LineWidth', 3, 'color', [0,0,0]);
 hold on;
-%-Plotting the figure for the universal IMFP curve
-loglog(eKE_si, imfp_si, '-', 'LineWidth', 3, 'color', [0.2,0.2,0.8]); 
-%-Plotting the figure for the universal IMFP curve
-loglog(eKE_sio2, imfp_sio2,  '-', 'LineWidth', 3, 'color', [0.8,0.2,0.2]); 
 %% Figure formatting
 grid on; grid minor;
 ax = gca;
@@ -164,11 +152,9 @@ axis([1, 1e4, 1, 1e3]);
 line([0 0], [-1e5, 1e5], 'Color', [0 0 0], 'LineWidth', 0.75, 'Linestyle', '--');
 line([-1e5, 1e5], [0 0], 'Color', [0 0 0], 'LineWidth', 0.75, 'Linestyle', '--');
 %% Adding custom legends
-h = zeros(3, 1);
+h = zeros(1, 1);
 h(1) = plot(NaN,NaN,'.-', 'linewidth', 5, 'color', [0,0,0]);
-h(2) = plot(NaN,NaN,'-', 'linewidth', 5, 'color', [0.2,0.2,0.8]);
-h(3) = plot(NaN,NaN,'-', 'linewidth', 5, 'color', [0.8,0.2,0.2]);
-legend(h, {'$$ IMFP_{theory} $$', '$$ IMFP_{Si} $$', '$$ IMFP_{SiO_2}$$'}, 'interpreter', 'latex');
+legend(h, {'$$ IMFP_{theory} $$'}, 'interpreter', 'latex');
 
 % --- Executes on button press in pushbutton_ARPESView.
 function pushbutton_ARPESView_Callback(hObject, ~, handles)
