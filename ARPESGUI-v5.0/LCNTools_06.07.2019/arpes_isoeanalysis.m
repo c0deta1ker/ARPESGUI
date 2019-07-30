@@ -22,7 +22,7 @@ function varargout = arpes_isoeanalysis(varargin)
 
 % Edit the above text to modify the response to help arpes_isoeanalysis
 
-% Last Modified by GUIDE v2.5 16-Jan-2019 14:27:21
+% Last Modified by GUIDE v2.5 29-Jul-2019 17:48:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,8 +56,8 @@ function arpes_isoeanalysis_OpeningFcn(hObject, ~, handles, varargin)
 handles.output = hObject;
 %% 1 - Setting the native size of the whole GUI figure
 screen_size = get(0,'ScreenSize');
-screen_size(3) = 645;
-screen_size(4) = 580;
+screen_size(3) = 650;
+screen_size(4) = 700;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_isoeanalysis');
 %% 2 - Setting push-buttons to inactive
 set(handles.pushbutton_SAVE, 'Enable', 'off');
@@ -72,7 +72,8 @@ set(findall(handles.uipanel_FilterData, '-property', 'enable'), 'enable', 'off')
 set(findall(handles.uipanel_isoeExtract, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_isoeCorrections, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_isoeFigure, '-property', 'enable'), 'enable', 'off');
-set(findall(handles.uipanel_LAcalc, '-property', 'enable'), 'enable', 'off');
+set(findall(handles.uipanel_SAcalc, '-property', 'enable'), 'enable', 'off');
+set(findall(handles.uipanel_LineProfile, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_bzExtract, '-property', 'enable'), 'enable', 'off');
 %% Save the handles structure
 guidata(hObject, handles);
@@ -101,16 +102,15 @@ set(handles.pushbutton_RESET, 'Enable', 'off');
 set(handles.edit_bzCol, 'Enable', 'off');
 set(handles.edit_bzWidth, 'Enable', 'off');
 set(handles.checkbox_bzOn, 'Enable', 'off');
-set(handles.checkbox_contOn, 'Enable', 'off');
 %% 2 - Setting ui-panels to inactive until data is loaded
 set(findall(handles.uipanel_FilterData, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_isoeExtract, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_isoeCorrections, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_isoeFigure, '-property', 'enable'), 'enable', 'off');
-set(findall(handles.uipanel_LAcalc, '-property', 'enable'), 'enable', 'off');
+set(findall(handles.uipanel_SAcalc, '-property', 'enable'), 'enable', 'off');
+set(findall(handles.uipanel_LineProfile, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_bzExtract, '-property', 'enable'), 'enable', 'off');
 %% 3 - Resetting the state of UI elements
-handles = checkbox_contOn_CreateFcn(handles.checkbox_contOn, [], handles);
 handles = checkbox_bzOn_CreateFcn(handles.checkbox_bzOn, [], handles);
 if isfield(handles, 'myBZ'); handles = rmfield(handles, 'myBZ'); end
 %% Save the handles structure
@@ -158,8 +158,8 @@ screen_size = get(0, 'ScreenSize');
 screen_pos = get(gcf, 'Position');
 screen_size(1) = screen_pos(1);
 screen_size(2) = screen_pos(2);
-screen_size(3) = 645;
-screen_size(4) = 580;
+screen_size(3) = 650;
+screen_size(4) = 700;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_isoeanalysis');
 %% Update handles structure
 guidata(hObject, handles);
@@ -196,7 +196,7 @@ function pushbutton_LOAD_Callback(hObject, ~, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %% 1 - Loading in the FileNames and PathNames of the selected data
-[FileNames, PathNames] = uigetfile({'*.h5;*.mat'}, 'Pick a *.h5 or *.mat data file...', 'MultiSelect', 'on');
+[FileNames, PathNames] = uigetfile({'*.mat'}, 'Pick a processed *.mat data file...', 'MultiSelect', 'on');
 % - If Cancel is pressed, then return nothing
 if isequal(PathNames,0) || isequal(FileNames,0); return; end
 % - 1.1 - Load in the file selected
@@ -216,7 +216,8 @@ set(findall(handles.uipanel_isoeExtract, '-property', 'enable'), 'enable', 'on')
 set(findall(handles.uipanel_isoeCorrections, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_bzExtract, '-property', 'enable'), 'enable', 'off');
 set(findall(handles.uipanel_isoeFigure, '-property', 'enable'), 'enable', 'off');
-set(findall(handles.uipanel_LAcalc, '-property', 'enable'), 'enable', 'off');
+set(findall(handles.uipanel_SAcalc, '-property', 'enable'), 'enable', 'off');
+set(findall(handles.uipanel_LineProfile, '-property', 'enable'), 'enable', 'off');
 %% 4 - Updating UI elements for previous isoe analysis
 handles = checkbox_bzOn_CreateFcn(handles.checkbox_bzOn, [], handles);
 if isfield(handles.myData{1}, 'isoe')
@@ -231,7 +232,8 @@ if isfield(handles.myData{1}, 'isoe')
         handles.myBZ = handles.myData{1}.bz;
         set(findall(handles.uipanel_isoeCorrections, '-property', 'enable'), 'enable', 'on');
         set(findall(handles.uipanel_isoeFigure, '-property', 'enable'), 'enable', 'on');
-        set(findall(handles.uipanel_LAcalc, '-property', 'enable'), 'enable', 'on');
+        set(findall(handles.uipanel_SAcalc, '-property', 'enable'), 'enable', 'on');
+        set(findall(handles.uipanel_LineProfile, '-property', 'enable'), 'enable', 'on');
         if handles.final_fig_args{11}==1
             set(handles.edit_bzCol, 'Enable', 'on');
             set(handles.edit_bzWidth, 'Enable', 'on');
@@ -243,6 +245,9 @@ if isfield(handles.myData{1}, 'isoe')
         end
     end    
 end
+%% 5 - Updating UI elements for IsoE video
+handles = edit_yLimsVideo_Callback(handles.edit_yLimsVideo, [], handles);
+handles = edit_sliceWin_Callback(handles.edit_sliceWin, [], handles);
 %% Display the handles data
 pushbutton_INFO_Callback(handles.pushbutton_INFO, [], handles);
 %% Save the handles structure
@@ -494,8 +499,6 @@ if isempty(answer) || string(answer) == "No"; return; end
 set(findall(handles.uipanel_isoeExtract, '-property', 'enable'), 'enable', 'on');
 set(findall(handles.uipanel_bzExtract, '-property', 'enable'), 'enable', 'on');
 handles = popupmenu_crystal_Callback(handles.popupmenu_crystal, [], handles);
-%% 5 - Updating final figure arguments
-handles = edit_axLims_Callback(handles.edit_axLims, [], handles);
 handles = edit_cLims_Callback(handles.edit_cLims, [], handles);
 %% Update the handles
 guidata(hObject, handles);
@@ -1086,7 +1089,8 @@ handles.myBZ.overlay = extract_plane(handles.myBZ.reciStr, handles.bz_args{4}, 1
 %% 3 - Updating the next UI panels to active
 set(findall(handles.uipanel_isoeCorrections, '-property', 'enable'), 'enable', 'on');
 set(findall(handles.uipanel_isoeFigure, '-property', 'enable'), 'enable', 'on');
-set(findall(handles.uipanel_LAcalc, '-property', 'enable'), 'enable', 'on');
+set(findall(handles.uipanel_SAcalc, '-property', 'enable'), 'enable', 'on');
+set(findall(handles.uipanel_LineProfile, '-property', 'enable'), 'enable', 'on');
 %% 4 - Updating UI elements
 if handles.final_fig_args{11}==1
     set(handles.edit_bzCol, 'Enable', 'on');
@@ -2204,70 +2208,192 @@ handles.final_fig_args{12} = get(hObject,'Value');
 %% Update handles structure
 guidata(hObject, handles);
 
-% --- Executes on button press in checkbox_contOn.
-function checkbox_contOn_Callback(hObject, ~, handles)
-% hObject    handle to checkbox_contOn (see GCBO)
-% handles    structure with handles and user data (see GUIDATA)
-
-%% 1 - Extracting user input
-val = get(hObject,'Value');
-handles.final_fig_args{13}  = val;
-if val == 1; fprintf("--> Show contours: True \n");
-else; fprintf("--> Show contours: False \n");
-end
-%% Update handles structure
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function handles = checkbox_contOn_CreateFcn(hObject, ~, handles)
-% hObject    handle to checkbox_contOn (see GCBO)
-% handles    empty - handles not created until after all CreateFcns called
-
-%% 1 - Set the default parameters
-set(hObject,'Value',0);
-handles.final_fig_args{13} = get(hObject,'Value');
-%% Update handles structure
-guidata(hObject, handles);
-
 % --- Executes on button press in pushbutton_Final2D.
 function pushbutton_Final2D_Callback(hObject, ~, handles)
 % hObject    handle to pushbutton_Final2D (see GCBO)
 % handles    structure with handles and user data (see GUIDATA)
 
+%% 1 - Plotting the final IsoE figure
 fig = figure(); set(fig, 'Name', 'Iso-Slice', 'Position', [1,1,700,750]);
 if isfield(handles, 'myBZ'); view_final(handles.myData, handles.myBZ.overlay, handles.final_fig_args);    
 else; view_final(handles.myData, [], handles.final_fig_args);
 end
+%% Update handles structure
+guidata(hObject, handles);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ISOE VIDEO PLOTTER  %%%%%%%%%%%%
+% --- Executes when changing the text
+function handles = edit_yLimsVideo_Callback(hObject, ~, handles)
+% hObject    handle to edit_yLimsVideo (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Extracting the input defined by user
+data_entry = round(sort(str2num(strrep(get(hObject,'String'),':',' '))), 2);
+%% 2 - Extracting the max/min values
+for i = 1:length(handles.myData)
+    if i ==1
+        ebLims(1) = min(handles.myData{i}.eb(:));
+        ebLims(2) = max(handles.myData{i}.eb(:));
+    else
+        if ebLims(1) > min(handles.myData{i}.eb(:)); ebLims(1) = min(handles.myData{i}.eb(:)); end
+        if ebLims(2) < max(handles.myData{i}.eb(:)); ebLims(2) = max(handles.myData{i}.eb(:)); end
+    end
+end
+%% 3 - Validity check
+ % - If no entry is made, default to a small range around the mean
+if isempty(data_entry) || length(data_entry) > 2 || size(data_entry, 1) > 1
+    data_entry(1) = ebLims(1) + 0.1;
+    data_entry(2) = ebLims(2) - 0.1;
+ % - If a single entry is made, ensure it does not exceed the max / min limits
+elseif length(data_entry) == 1 && size(data_entry, 1) ==1
+    if data_entry < ebLims(1); data_entry = ebLims(1) + 0.1;
+    elseif data_entry > ebLims(2); data_entry = ebLims(2) - 0.1;
+    end
+    data_entry = [-0.1, 0.1]+data_entry; 
+ % - If a double entry is made, ensure it does not exceed the max / min limits
+elseif length(data_entry) == 2
+    % -- Forcing the max / min limits on the entries
+    if data_entry(1) <  ebLims(1); data_entry(1) =  ebLims(1) + 0.1;
+    elseif data_entry(1) >  ebLims(2); data_entry(1) =  ebLims(2) - 0.1;
+    end
+    if data_entry(2) <  ebLims(1); data_entry(2) =  ebLims(1) + 0.1;
+    elseif data_entry(2) >  ebLims(2); data_entry(2) =  ebLims(2) - 0.1;
+    end
+    % -- For identical entries, make sure they are made different
+    if data_entry(1) == data_entry(2); data_entry(1) = data_entry(1) - 0.2; end
+end
+handles.arpesVideo_args{1} = round(sort(data_entry), 2); 
+set(hObject,'String', string(handles.arpesVideo_args{1}(1) + ":" + handles.arpesVideo_args{1}(2))); 
+fprintf("--> yLims (eb): " + string(handles.arpesVideo_args{1}(1) + ":" + handles.arpesVideo_args{1}(2)) + " \n");
+%% 4 - Update slice number
+if handles.arpesVideo_args{2} ~= 0
+    nSlices = round(0.5*abs(diff(handles.arpesVideo_args{1})/handles.arpesVideo_args{2}), 0);
+    set(handles.text_nSlices,'String', nSlices);
+else
+    set(handles.text_nSlices,'String', "n/a");
+end
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_yLimsVideo_CreateFcn(hObject, ~, handles)
+% hObject    handle to edit_yLimsVideo (see GCBO)
+% handles    empty - handles not created until after all CreateFcns called
+
+%% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%% 1 - Set the default parameters
+handles.arpesVideo_args{1} = []; 
+set(hObject,'String', "[]");
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes when changing the text
+function handles = edit_sliceWin_Callback(hObject, ~, handles)
+% hObject    handle to edit_sliceWin (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Extracting the input defined by user
+data_entry = abs(round(str2num(get(hObject,'String')), 4));
+%% 2 - Extracting the max/min values
+for i = 1:length(handles.myData)
+    if i ==1
+        dEb = abs(handles.myData{i}.eb(2,1,1) - handles.myData{i}.eb(1,1,1));
+    else
+        if dEb < abs(handles.myData{i}.eb(2,1,1) - handles.myData{i}.eb(1,1,1))
+            dEb = abs(handles.myData{i}.eb(2,1,1) - handles.myData{i}.eb(1,1,1));
+        end
+    end
+end
+%% 3 - Validity check
+% Initial validity check
+if isempty(data_entry); data_entry = dEb;
+else
+    data_entry = data_entry(1); 
+    if data_entry < dEb; data_entry = dEb;
+    elseif data_entry > 1; data_entry = 1; 
+    end
+end
+% Second validity check
+if data_entry + 0.01 > abs(diff(handles.arpesVideo_args{1}))
+    data_entry = 0.5*abs(diff(handles.arpesVideo_args{1}));
+end
+% Printing and storing output
+handles.arpesVideo_args{2} = round((data_entry), 2); 
+set(hObject,'String', string(handles.arpesVideo_args{2})); 
+fprintf("--> sliceWin (eV): " + string(handles.arpesVideo_args{2}) + " \n");
+%% 4 - Update slice number
+if handles.arpesVideo_args{2} ~= 0
+    nSlices = round(0.5*abs(diff(handles.arpesVideo_args{1})/handles.arpesVideo_args{2}), 0);
+    set(handles.text_nSlices,'String', nSlices);
+else
+    set(handles.text_nSlices,'String', "n/a");
+end
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_sliceWin_CreateFcn(hObject, ~, handles)
+% hObject    handle to edit_sliceWin (see GCBO)
+% handles    empty - handles not created until after all CreateFcns called
+
+%% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%% 1 - Set the default parameters
+handles.arpesVideo_args{2} = 0; 
+set(hObject,'String', "0");
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes on button press in pushbutton_ViewARPESvideo.
+function pushbutton_ViewARPESvideo_Callback(hObject, ~, handles)
+% hObject    handle to pushbutton_ViewARPESvideo (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Plotting the ARPES video
+view_slicevideo(handles.myData, handles.myBZ.overlay, handles.final_fig_args, handles.arpesVideo_args);    
+%% Update handles structure
+guidata(hObject, handles);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%% LUTTINGER AREA CALCULATOR  %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% SURFACE AREA CALCULATOR  %%%%%%%%%%%%%
 % --- Executes when changing the text
 function edit_minArea_Callback(hObject, ~, handles)
 % hObject    handle to edit_minArea (see GCBO)
 % handles    structure with handles and user data (see GUIDATA)
 
 %% 1 - Extracting the input defined by user
-data_entry = abs(round(sort(str2num(strrep(get(hObject,'String'),',',' '))), 6));
-%% 2 - Validity check on input
+data_entry = round(str2num(get(hObject,'String')), 4);
+%% 2 - Extracting the max/min values
+minCol = 0;
+maxCol = 1e2;
+%% 3 - Validity check on input
 % - If no entry is made, default
 if isempty(data_entry)
-    data_entry = 0;
+    data_entry = minCol;
 % - If a double entry is made, ensure it does not exceed the max / min limits
 elseif length(data_entry) > 1
-    if data_entry(1) < 0; data_entry(1) = 0; end
-    if data_entry(1) > 10; data_entry(1) = 10; end
+    if data_entry(1) < minCol; data_entry(1) = minCol; end
+    if data_entry(1) > maxCol; data_entry(1) = maxCol; end
     data_entry = data_entry(1);
 % - If a single entry is made, ensure it does not exceed the max / min limits
 elseif length(data_entry) == 1
     % -- Forcing the max / min limits on the entries
-    if data_entry < 0; data_entry = 0; end
-    if data_entry > 10; data_entry = 10; end
+    if data_entry < minCol; data_entry = minCol; end
+    if data_entry > maxCol; data_entry = maxCol; end
 end
 %% 3 - Assigning output and printing change
-handles.lv_args{1} = round(data_entry, 6);
-set(hObject,'String', string(handles.lv_args{1})); 
-fprintf("--> minArea: " + string(handles.lv_args{1} + "\n"));
+handles.sa_args{1} = round(data_entry, 4);
+set(hObject,'String', string(handles.sa_args{1})); 
+fprintf("--> minArea: " + string(handles.sa_args{1} + "\n"));
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -2282,8 +2408,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 %% Set default parameters
-handles.lv_args{1} = 0; 
-set(hObject,'String', sprintf("%.0f", handles.lv_args{1})); 
+handles.sa_args{1} = 0; 
+set(hObject,'String', string(handles.sa_args{1})); 
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -2293,26 +2419,39 @@ function edit_maxThresh_Callback(hObject, ~, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %% 1 - Extracting the input defined by user
-data_entry = round(sort(str2num(strrep(get(hObject,'String'),',',' '))), 4);
-%% 2 - Validity check on input
+data_entry = round(str2num(get(hObject,'String')), 4);
+%% 2 - Extracting the max/min values
+for i = 1:length(handles.myData)
+    if i ==1
+        minCol = min(handles.myData{i}.isoe.DSlice(:));
+        maxCol = max(handles.myData{i}.isoe.DSlice(:));
+    else
+        if minCol < min(handles.myData{i}.isoe.DSlice(:)); minCol = min(handles.myData{i}.isoe.DSlice(:)); end
+        if maxCol < max(handles.myData{i}.isoe.DSlice(:)); maxCol = max(handles.myData{i}.isoe.DSlice(:)); end
+    end
+end
+defaultCol = 0.5*abs((abs(maxCol) - abs(minCol)));
+minCol = 0;
+maxCol = 1;
+%% 3 - Validity check on input
 % - If no entry is made, default
 if isempty(data_entry)
-    data_entry = 0.5;
+    data_entry = defaultCol;
 % - If a double entry is made, ensure it does not exceed the max / min limits
 elseif length(data_entry) > 1
-    if data_entry(1) < 0; data_entry(1) = 0; end
-    if data_entry(1) > 1; data_entry(1) = 1; end
+    if data_entry(1) < minCol; data_entry(1) = minCol; end
+    if data_entry(1) > maxCol; data_entry(1) = maxCol; end
     data_entry = data_entry(1);
 % - If a single entry is made, ensure it does not exceed the max / min limits
 elseif length(data_entry) == 1
     % -- Forcing the max / min limits on the entries
-    if data_entry < 0; data_entry = 0; end
-    if data_entry > 1; data_entry = 1; end
+    if data_entry < minCol; data_entry = minCol; end
+    if data_entry > maxCol; data_entry = maxCol; end
 end
 %% 3 - Assigning output and printing change
-handles.lv_args{2} = round(data_entry, 4);
-set(hObject,'String', string(handles.lv_args{2})); 
-fprintf("--> maxThresh: " + string(handles.lv_args{2} + "\n"));
+handles.sa_args{2} = round(data_entry, 4);
+set(hObject,'String', string(handles.sa_args{2})); 
+fprintf("--> maxThresh: " + string(handles.sa_args{2} + "\n"));
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -2327,14 +2466,14 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 %% Set default parameters
-handles.lv_args{2} = 1; 
-set(hObject,'String', string(handles.lv_args{2})); 
+handles.sa_args{2} = 0; 
+set(hObject,'String', string(handles.sa_args{2})); 
 %% Update handles structure
 guidata(hObject, handles);
 
-% --- Executes on button press in pushbutton_CalcLuttArea.
-function pushbutton_CalcLuttArea_Callback(hObject, ~, handles)
-% hObject    handle to pushbutton_CalcLuttArea (see GCBO)
+% --- Executes on button press in pushbutton_FindIsoCont.
+function pushbutton_FindIsoCont_Callback(hObject, ~, handles)
+% hObject    handle to pushbutton_FindIsoCont (see GCBO)
 % handles    structure with handles and user data (see GUIDATA)
 
 %% 1 - Plotting the final ARPES figure
@@ -2345,12 +2484,185 @@ if isfield(handles, 'myBZ'); view_final(handles.myData, handles.myBZ.overlay, fi
 else; view_final(handles.myData, [], final_fig_args);
 end
 %% 2 - Determination of the Luttinger Area
-handles.myData = luttinger_area_calc(handles.myData, handles.lv_args);
-%% 3 - Updating UI elements
-set(handles.checkbox_contOn, 'Enable', 'on');
+handles.myData = surface_area_calc(handles.myData, handles.sa_args);
 %% Update handles structure
 guidata(hObject, handles);
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LINE PROFILE EXTRACTION  %%%%%%%%%%%%%
+% --- Executes on selection change in popupmenu_cutType.
+function popupmenu_cutType_Callback(hObject, ~, handles)
+% hObject    handle to popupmenu_cutType (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% Extracting User Input
+contents = cellstr(get(hObject,'String'));
+handles.lineprof_args{1} = string(contents{get(hObject,'Value')});
+%% Updating input variables
+set(handles.edit_cutVal, 'String', []);
+handles = edit_cutVal_Callback(handles.edit_cutVal, [], handles);
+handles = edit_cutWin_Callback(handles.edit_cutWin, [], handles);
+%% Printing the change that has occured
+fprintf("--> cutType: " + handles.lineprof_args{1} + " \n");
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_cutType_CreateFcn(hObject, ~, handles)
+% hObject    handle to popupmenu_cutType (see GCBO)
+% handles    empty - handles not created until after all CreateFcns called
+
+%% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%% Set default parameters
+contents = cellstr(get(hObject,'String'));
+handles.lineprof_args{1} = string(contents{1});
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes when changing the text
+function handles = edit_cutVal_Callback(hObject, ~, handles)
+% hObject    handle to edit_cutVal (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Extracting the input defined by user
+data_entry = round(str2num(get(hObject,'String')), 4);
+%% 2 - Extracting the max/min values
+for i = 1:length(handles.myData)
+    % For a horizontal cut through the x-axis
+    if handles.lineprof_args{1} == "horizontal"
+        if i ==1
+            axLim(1) = min(handles.myData{i}.isoe.YSlice(:));
+            axLim(2) = max(handles.myData{i}.isoe.YSlice(:));
+        else
+            if axLim(1) > min(handles.myData{i}.isoe.YSlice(:)); axLim(1) = min(handles.myData{i}.isoe.YSlice(:)); end
+            if axLim(2) < max(handles.myData{i}.isoe.YSlice(:)); axLim(2) = max(handles.myData{i}.isoe.YSlice(:)); end
+        end
+    % For a vertical cut through the scan-axis
+    elseif handles.lineprof_args{1} == "vertical"
+        if i ==1
+            axLim(1) = min(handles.myData{i}.isoe.XSlice(:));
+            axLim(2) = max(handles.myData{i}.isoe.XSlice(:));
+        else
+            if axLim(1) > min(handles.myData{i}.isoe.XSlice(:)); axLim(1) = min(handles.myData{i}.isoe.XSlice(:)); end
+            if axLim(2) < max(handles.myData{i}.isoe.XSlice(:)); axLim(2) = max(handles.myData{i}.isoe.XSlice(:)); end
+        end
+    end
+end
+%% 3 - Validity check on input
+% - If no entry is made, default
+if isempty(data_entry)
+    data_entry = mean(axLim);
+% - If a double entry is made, ensure it does not exceed the max / min limits
+elseif length(data_entry) > 1
+    if data_entry(1) < axLim(1); data_entry(1) = axLim(1); end
+    if data_entry(1) > axLim(2); data_entry(1) = axLim(2); end
+    data_entry = data_entry(1);
+% - If a single entry is made, ensure it does not exceed the max / min limits
+elseif length(data_entry) == 1
+    % -- Forcing the max / min limits on the entries
+    if data_entry < axLim(1); data_entry = axLim(1); end
+    if data_entry > axLim(2); data_entry = axLim(2); end
+end
+handles.lineprof_args{2} = round((data_entry), 2); 
+set(hObject,'String', string(handles.lineprof_args{2}));
+fprintf("--> cutVal: " + string(handles.lineprof_args{2}) + " \n");
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_cutVal_CreateFcn(hObject, ~, handles)
+% hObject    handle to edit_cutVal (see GCBO)
+% handles    empty - handles not created until after all CreateFcns called
+
+%% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%% Set default parameters
+handles.lineprof_args{2} = 0; 
+set(hObject,'String', string(handles.lineprof_args{2})); 
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes when changing the text
+function handles = edit_cutWin_Callback(hObject, ~, handles)
+% hObject    handle to edit_cutWin (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Extracting the input defined by user
+data_entry = abs(round(str2num(get(hObject,'String')), 4));
+%% 2 - Validity check on input
+% - If no entry is made, default
+if isempty(data_entry)
+    data_entry = 0.1;
+% - If a double entry is made, ensure it does not exceed the max / min limits
+elseif length(data_entry) > 1
+    if data_entry(1) < 0.01; data_entry(1) = 0.01; end
+    if data_entry(1) > 2; data_entry(1) = 2; end
+    data_entry = data_entry(1);
+% - If a single entry is made, ensure it does not exceed the max / min limits
+elseif length(data_entry) == 1
+    % -- Forcing the max / min limits on the entries
+    if data_entry < 0.01; data_entry = 0.01; end
+    if data_entry > 2; data_entry = 2; end
+end
+handles.lineprof_args{3} = round((data_entry), 2); 
+set(hObject,'String', string(handles.lineprof_args{3}));
+fprintf("--> cutWin: " + string(handles.lineprof_args{3}) + " \n");
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_cutWin_CreateFcn(hObject, ~, handles)
+% hObject    handle to edit_cutWin (see GCBO)
+% handles    empty - handles not created until after all CreateFcns called
+
+%% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%% Set default parameters
+handles.lineprof_args{3} = 0; 
+set(hObject,'String', string(handles.lineprof_args{3})); 
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes on button press in pushbutton_ExtractLineProfile.
+function pushbutton_ExtractLineProfile_Callback(hObject, ~, handles)
+% hObject    handle to pushbutton_ExtractLineProfile (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Plotting the ARPES IsoE slice (if required)
+if isempty(findobj('type','figure','number',3327))
+    fig = figure(3327); 
+    set(fig, 'Name', 'Line Profile Determination', 'Position', [1,1,800,450]);
+    subplot(121); hold on;
+    if isfield(handles, 'myBZ'); view_final(handles.myData, handles.myBZ.overlay, handles.final_fig_args);    
+    else; view_final(handles.myData, [], handles.final_fig_args);
+    end
+    % - Re-formatting the figure
+    colorbar off;
+    for i = 1:length(handles.myData)
+        xTemp(i,:) = handles.myData{i}.isoe.xLims;
+        yTemp(i,:) = handles.myData{i}.isoe.yLims;
+    end
+    xLims(1) = min(min(xTemp)); xLims(2) = max(max(xTemp));
+    yLims(1) = min(min(yTemp)); yLims(2) = max(max(yTemp));
+    axis([xLims, yLims]);
+    title('IsoE slice');
+end
+%% 2 - Plotting the line profiles
+fig = figure(3327); subplot(121);
+view_lineprofile(handles.myData, handles.lineprof_args)
+%% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% INTERNAL PROCESSING FUNCTIONS %%%%%%%%%%
@@ -3528,8 +3840,8 @@ if plotFig == 1
 end
 
 % ---  Function to extract the Iso-surface given the slice range
-function dataStr = luttinger_area_calc(dataStr, lv_args)
-% dataStr = luttinger_area_calc(dataStr, lv_args)
+function dataStr = surface_area_calc(dataStr, sa_args)
+% dataStr = surface_area_calc(dataStr, sa_args)
 %   This function determines the area over some threshold that is defined
 %   by the user, which can be used to sub-sequentially determine the
 %   Luttinger Area for number density calculations.
@@ -3539,7 +3851,7 @@ function dataStr = luttinger_area_calc(dataStr, lv_args)
 %   IN:
 %   dataStr - loaded MATLAB data structure.
 %   -   dataStr{i}.isoe:        contains the i'th isoe data for the i'th file loaded.
-%   -   lv_args:                    {1x2} cell-array of {minArea, maxThresh}
+%   -   sa_args:                    {1x2} cell-array of {minArea, maxThresh}
 %
 %   OUT:
 %   dataStr{i} - expanded MATLAB data structure containing the new elements for the i'th file loaded.
@@ -3583,7 +3895,7 @@ for i = 1:length(dataStr)
     
     %% 2.2 - Calculating the contour threshold of the IsoE surface
     % - Extracting and plotting the filled contour plot
-    [~, h] = contour(x, y, d, [1, 1]*lv_args{2}*max_d,...
+    [~, h] = contour(x, y, d, [1, 1]*sa_args{2}*max_d,...
         'edgecolor', 'none', 'linewidth', 2, 'linestyle', '-');
     % - Finding the areas contained within all contours
     n = 0; ii = 1;
@@ -3606,7 +3918,7 @@ for i = 1:length(dataStr)
     end
     
     %% 3 - Appling the limitations from the minimum area
-    indx = find(areaThresh > lv_args{1});
+    indx = find(areaThresh > sa_args{1});
     j = 1;
     for n = indx
         dataStr{i}.isoe.xCont{j} = xx{n};
@@ -3655,7 +3967,6 @@ bzOn = final_fig_args{9};
 bzCol = final_fig_args{10};
 bzWidth = final_fig_args{11};
 interpData = final_fig_args{12};
-contourPlot = final_fig_args{13};
 
 %% 1 - Opening a new figure object
 hold on;
@@ -3664,14 +3975,6 @@ if interpData == 1
     for i = 1:length(dataStr); ImData(dataStr{i}.isoe.XSlice, dataStr{i}.isoe.YSlice, dataStr{i}.isoe.DSlice, 'interp'); end
 else
     for i = 1:length(dataStr); ImData(dataStr{i}.isoe.XSlice, dataStr{i}.isoe.YSlice, dataStr{i}.isoe.DSlice); end
-end
-%% 3 - Plotting the contour plots
-if contourPlot == 1
-    for i = 1:length(dataStr)
-        for n = 1:length(dataStr{i}.isoe.areaCont)
-            plot(dataStr{i}.isoe.xCont{n}, dataStr{i}.isoe.yCont{n}, 'color', [0.1,0.7,0.1], 'linewidth', 2, 'linestyle', '-');
-        end
-    end
 end
 %% 4 - Plotting the Brilluoin Zone overlay
 if bzOn == 1
@@ -3693,7 +3996,7 @@ if gridOn == 1; grid on; end
 % -- Defining the axes properties
 ax = gca;
 % Font properties
-ax.FontName = 'Helvetica'; ax.FontWeight = 'normal'; ax.FontSize = 20;
+ax.FontName = 'Helvetica'; ax.FontWeight = 'normal'; ax.FontSize = 15;
 % Tick properties
 ax.TickLabelInterpreter = 'latex';
 ax.XMinorTick = 'on'; ax.YMinorTick = 'on';
@@ -3744,5 +4047,262 @@ cb.TickLength = 0.04; cb.TickDirection = 'out';
 cb.Position = [0.93 0.83 0.02 0.07];
 % --- Colorbar box properties
 cb.Color = [0 0 0]; cb.Box = 'on'; cb.LineWidth = 1.2;
+
+% ---  Function to plot the isoe video of the ARPES data
+function view_slicevideo(dataStr, bzStr, final_fig_args, arpesVideo_args)
+% view_slicevideo(dataStr, view3D_args)
+%   This function plots a slice ARPES image as a function
+%   of the binding energy (for IsoE) or kx (for IsoK).
+%
+%   REQ. FUNCTIONS:
+%   -   [xField, yField, zField, dField] = find_data_fields(dataStr);
+%   -   gca_properties(type)
+%   -   [DSlice,XSlice]=Slice(ACorr,ECorr,Data,xMode,Win) 
+%   -   [h=] ImData(X,Y,Z[,style])
+%
+%   IN:
+%   -   dataStr:             data structure of the ARPES data.
+%   -   view3D_args:    1x5 cell of {3DType, 3DLimits, Interpolate, SquareAxes, RemapSlice}.
+%
+%   OUT:
+%   -   figure output.
+
+%% Initialising variables
+% - Slice video variables
+sliceLims = arpesVideo_args{1};
+sliceWin = arpesVideo_args{2};
+% - Final figure variables
+cMap = final_fig_args{1};
+cLims = final_fig_args{2};
+axCol = final_fig_args{3};
+axLims = final_fig_args{4};
+axisOn = final_fig_args{5};
+gridOn = final_fig_args{6};
+scanOn = final_fig_args{7};
+backCol = final_fig_args{8};
+bzOn = final_fig_args{9};
+bzCol = final_fig_args{10};
+bzWidth = final_fig_args{11};
+interpData = final_fig_args{12};
+
+%% Initialisation to save the video as a .avi file
+filter = {'*.avi'};
+[save_filename, save_filepath] = uiputfile(filter);
+fname = char(string(save_filepath) + string(save_filename));
+% If Cancel is pressed, then return nothing
+if isequal(save_filepath,0) || isequal(save_filename,0); return; end
+% Else proceed with the video plotting
+disp('-> Plotting IsoE video...')
+ %% 1 - Initialising variables for slice video
+ % - Initialising window parameters
+WinLims = sort(sliceLims);
+stepsize = sliceWin;
+iWin = WinLims(2) + [-0.5, 0.5]*stepsize; 
+% - Initialising video parameters
+nFrames = round((WinLims(2) - WinLims(1))/(2*stepsize), 0)+1;
+vidObj = VideoWriter(fname);
+vidObj.FrameRate = 10;
+open(vidObj);
+% - Open and freeze the figure axes
+fig = figure(); set(fig, 'Name', 'IsoSlice Video', 'Position', [1,1,700,750]);
+
+%% 2 - Running the slice video frame by frame
+for f = 1:nFrames 
+    %% 2.1 INITIALISING FIGURE AND SLICE WINDOW
+    % - Finding the next iteration of the slice window
+    Win = iWin-(f-1)*2*stepsize;
+    % - Reset the figure
+    cla reset; clf reset; delete(findall(gcf,'type','annotation'))
+    % - Extracting the mean slice range as a string
+    scanVal =  sprintf('$$ \\bf E_B = %.2f eV $$', mean(Win));
+    %% 2.2 EXTRACTING THE ISOE SLICES
+    for i = 1:length(dataStr)
+        % - Extracting the fields to be used
+        % Defining the x, y and d-fields
+        xField = 'kx';  yField = 'eb';  dField = 'data';
+        if dataStr{i}.Type == "Eb(kx,ky)"; zField = 'ky';
+        elseif dataStr{i}.Type == "Eb(kx,kz)"; zField = 'kz';
+        end
+        % - Extracting the IsoE slices
+        [DSlice{i}, XSlice{i}] = Slice(dataStr{i}.(xField), dataStr{i}.(yField), dataStr{i}.(dField), 'IsoE', Win);
+        % - Extracting the scan parameter variables
+        if isfield(dataStr{i}, 'kx'); init = ceil(0.5*size(dataStr{i}.(dField), 2)); YSlice{i} = squeeze(dataStr{i}.(zField)(init,:,:))';
+        else; YSlice{i} = squeeze(dataStr{i}.(zField))';
+        end
+    end
+    %% 2.3 PLOTTING THE ISOE SLICES
+    hold on;
+    if interpData == 1
+        for i = 1:length(dataStr); ImData(XSlice{i}, YSlice{i}, DSlice{i}, 'interp'); end
+    else
+        for i = 1:length(dataStr); ImData(XSlice{i}, YSlice{i}, DSlice{i}); end
+    end
+    %% 2.4 Plotting the Brilluoin Zone overlay
+    if bzOn == 1
+        for i = 1:size(bzStr.X, 2)
+            plot(bzStr.X{i}, bzStr.Y{i}, '-', 'color', bzCol, 'linewidth', bzWidth);
+        end
+        xticks(round(-20*bzStr.gX:bzStr.gX/2:20*bzStr.gX,2));
+        yticks(round(-20*bzStr.gY:bzStr.gY/2:20*bzStr.gY,2));
+    end
+    %% 2.5 Applying color and axes limits, grid- and axes-lines
+    axis equal;
+    colormap(cMap); caxis(cLims); axis(axLims);
+    if axisOn == 1 
+        line([0 0], [-1e5, 1e5], 'Color', axCol, 'LineWidth', 1, 'Linestyle', '--');
+        line([-1e5, 1e5], [0 0], 'Color', axCol, 'LineWidth', 1, 'Linestyle', '--');
+    end
+    if gridOn == 1; grid on; end
+    %% 2.6 Other general formatting
+    % -- Defining the axes properties
+    ax = gca;
+    % Font properties
+    ax.FontName = 'Helvetica'; ax.FontWeight = 'normal'; ax.FontSize = 20;
+    % Tick properties
+    ax.TickLabelInterpreter = 'latex';
+    ax.XMinorTick = 'on'; ax.YMinorTick = 'on';
+    ax.TickDir = 'out';
+    ax.TickLength = [0.01 0.025];
+    ax.XColor = [0 0 0]; ax.YColor = [0 0 0];
+    % Ruler properties
+    ax.XAxisLocation = 'bottom';            % 'bottom' | 'top' | 'origin'
+    ax.YAxisLocation = 'left';                   % 'left' | 'right' | 'origin'
+    % Box Styling properties
+    ax.Color = backCol;
+    ax.LineWidth = 1.5;
+    ax.Box = 'off'; ax.Layer = 'Top';
+    % Labelling the axes depending on what scan parameter is is taken
+    xlabel('$$ \bf  k_x (\AA^{-1}) $$', 'Interpreter', 'latex');
+    if dataStr{1}.isoe.Type == "Eb(kx,ky)";  ylabel('$$ \bf  k_y (\AA^{-1}) $$', 'Interpreter', 'latex'); 
+    elseif dataStr{1}.isoe.Type == "Eb(kx,kz)"; ylabel('$$ \bf  k_z (\AA^{-1}) $$', 'Interpreter', 'latex'); 
+    end
+    fig = gcf;
+    % Window properties
+    fig.Color = [1 1 1]; fig.InvertHardcopy = 'off';
+    % - Add annotation of the scan parameter
+    text_pos = [0.15 0.15 0.22 0.06];
+    annotation('textbox', text_pos, 'String',scanVal, 'FitBoxToText','on',...
+        'color', [0 0 0], 'fontsize', 13, 'backgroundcolor', [1 1 1], 'facealpha', 0.8,...
+        'linewidth', 2, 'horizontalalignment', 'center', 'verticalalignment', 'middle',...
+        'interpreter', 'latex');
+    %% 2.7 Adding additional y-axis for the scan parameter
+    if scanOn == 1
+        scanAxis = [];
+        for i = 1:length(dataStr); scanAxis = horzcat(scanAxis, dataStr{i}.isoe.scanAxis); end
+        scanAxis = [min(scanAxis(:)), max(scanAxis(:))];
+        yyaxis right;
+        ylim([scanAxis(1), scanAxis(2)]);
+        if dataStr{1}.isoe.Type == "Eb(kx,ky)"
+            ylabel('$$ \bf  \tau (^{\circ}) $$', 'Interpreter', 'latex'); 
+            yticks(round(scanAxis(1),-1):1:2*scanAxis(2));
+        elseif dataStr{1}.isoe.Type == "Eb(kx,kz)"
+            ylabel('$$ \bf  hv (eV) $$', 'Interpreter', 'latex'); 
+            yticks(round(scanAxis(1),-1):100:2*scanAxis(2));
+        end
+        ax = gca;
+        ax.YColor = [0.2 0.2 0.7]; ax.XMinorTick = 'on'; ax.YMinorTick = 'on';
+    end
+    %% 2.8 Colorbar properties
+    cb = colorbar; 
+    % --- Colorbar font properties
+    cb.FontName = 'Helvetica'; cb.FontWeight = 'normal'; cb.FontSize = 12;
+    % --- Colorbar tick properties
+    cb.TickLabelInterpreter = 'latex';
+    cb.TickLength = 0.04; cb.TickDirection = 'out';
+    % --- Colorbar position properties
+    cb.Position = [0.93 0.83 0.02 0.07];
+    % --- Colorbar box properties
+    cb.Color = [0 0 0]; cb.Box = 'on'; cb.LineWidth = 1.2;
+    %% Adding the current figure as a frame to the video dataObject
+    mov = getframe(gcf);        %add current figure as frame
+    writeVideo(vidObj,mov);     %write frame to vidObj
+end
+close(vidObj);
+disp('-> Finished plotting IsoE video...')
+
+% ---  Function to plot a line-profile
+function view_lineprofile(dataStr, lineprof_args)
+
+
+%% Initialising variables
+% Set random color for the line profile
+col = rand(1,3);
+% Determine the x-axis limits for the type of profile to image
+for i = 1:length(dataStr)
+    xTemp(i,:) = dataStr{i}.isoe.xLims;
+    yTemp(i,:) = dataStr{i}.isoe.yLims;
+end
+xLims(1) = min(min(xTemp)); xLims(2) = max(max(xTemp));
+yLims(1) = min(min(yTemp));  yLims(2) = max(max(yTemp));
+% Determine the window for the line profile integral
+Win = lineprof_args{2} + [-lineprof_args{3}, +lineprof_args{3}];
+
+%% 1 - Plotting the line profile over the ARPES IsoE slice
+if lineprof_args{1} == "horizontal"
+    % Finding the x- and y-values of the line profile
+    x = [xLims(1), xLims(2), xLims(2), xLims(1)];
+    y = [Win(1), Win(1), Win(2), Win(2)];
+    hold on;
+    % -- Plotting the line profile patch
+    patch(x, y, col, 'edgecolor', 'none', 'facealpha', 0.2);
+    plot(x, y, '-', 'linewidth', 2, 'color', col);
+    % -- Adding text to identify the line
+    text(mean(x(:)), mean(y(:)), sprintf("%.3f ± %.3f", lineprof_args{2}, lineprof_args{3}),...
+        'color', col, 'Fontsize', 12, 'horizontalalignment', 'center');
+elseif lineprof_args{1} == "vertical"
+    % Finding the x- and y-values of the line profile
+    x = [Win(1), Win(1), Win(2), Win(2)];
+    y = [yLims(1), yLims(2), yLims(2), yLims(1)];
+    hold on;
+    % -- Plotting the line profile patch
+    patch(x, y, col, 'edgecolor', 'none', 'facealpha', 0.2);
+    plot(x, y, '-', 'linewidth', 1, 'color', col);
+    % -- Adding text to identify the line
+    text(mean(x(:)), mean(y(:)), sprintf("%.3f ± %.3f", lineprof_args{2}, lineprof_args{3}),...
+        'color', col, 'Fontsize', 12, 'horizontalalignment', 'center');
+end
+%% 2 - Plotting the line profile to be appended
+% - Extracting the line profiles
+for i = 1:length(dataStr)
+    if lineprof_args{1} == "horizontal"
+        subplot(222); hold on;
+        [XCut{i}, DCut{i}] = Cut(dataStr{i}.isoe.XSlice,dataStr{i}.isoe.YSlice,dataStr{i}.isoe.DSlice,'mdc',Win);
+        xlim([xLims(1), xLims(2)]);
+        title('horizontal cuts');
+    elseif lineprof_args{1} == "vertical"
+        subplot(224); hold on;
+        [XCut{i}, DCut{i}] = Cut(dataStr{i}.isoe.XSlice,dataStr{i}.isoe.YSlice,dataStr{i}.isoe.DSlice,'edc',Win);
+        xlim([yLims(1), yLims(2)]);
+        title('vertical cuts');
+    end
+end
+% - Plotting the line profiles
+if lineprof_args{1} == "horizontal"
+    for i = 1:length(dataStr)
+        if ~isempty(XCut{i}); plot(XCut{i}, DCut{i}, '.-', 'color', col, 'linewidth', 1.5); end
+    end
+elseif lineprof_args{1} == "vertical"
+    for i = 1:length(dataStr)
+        if ~isempty(XCut{i}); plot(XCut{i}, DCut{i}, '.-', 'color', col, 'linewidth', 1.5); end
+    end
+end
+% Figure formating
+% -- Defining the axes properties
+ax = gca;
+% Font properties
+ax.FontName = 'Helvetica'; ax.FontWeight = 'normal'; ax.FontSize = 15;
+% Tick properties
+ax.TickLabelInterpreter = 'latex';
+ax.XMinorTick = 'on'; ax.YMinorTick = 'on';
+ax.TickDir = 'out';
+ax.TickLength = [0.01 0.025];
+ax.XColor = [0 0 0]; ax.YColor = [0 0 0];
+% Ruler properties
+ax.XAxisLocation = 'bottom';            % 'bottom' | 'top' | 'origin'
+ax.YAxisLocation = 'left';                   % 'left' | 'right' | 'origin'
+% Box Styling properties
+ax.LineWidth = 1.5;
+ax.Box = 'on'; ax.Layer = 'Top';
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% The End %%%%%%%%%%%%%%%%%%%

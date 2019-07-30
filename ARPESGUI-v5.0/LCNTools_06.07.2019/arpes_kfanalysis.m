@@ -22,7 +22,7 @@ function varargout = arpes_kfanalysis(varargin)
 
 % Edit the above text to modify the response to help arpes_kfanalysis
 
-% Last Modified by GUIDE v2.5 15-Dec-2018 15:40:45
+% Last Modified by GUIDE v2.5 28-Jul-2019 21:37:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,8 +56,8 @@ function arpes_kfanalysis_OpeningFcn(hObject, ~, handles, varargin)
 handles.output = hObject;
 %% 1 - Setting the native size of the whole GUI figure
 screen_size = get(0,'ScreenSize');
-screen_size(3) = 455;
-screen_size(4) = 385;
+screen_size(3) = 720;
+screen_size(4) = 310;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_kfanalysis');
 %% 2 - Setting push-buttons to inactive
 set(handles.pushbutton_SAVE, 'Enable', 'off');
@@ -158,8 +158,8 @@ screen_size = get(0, 'ScreenSize');
 screen_pos = get(gcf, 'Position');
 screen_size(1) = screen_pos(1);
 screen_size(2) = screen_pos(2);
-screen_size(3) = 455;
-screen_size(4) = 385;
+screen_size(3) = 720;
+screen_size(4) = 310;
 set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_kfanalysis');
 %% Update handles structure
 guidata(hObject, handles);
@@ -216,10 +216,12 @@ set(handles.popupmenu_kfType, 'Enable', 'off');
 % -- Setting the processing constraints based on the scan type
 if handles.myData.Type == "Eb(k)"
     set(handles.edit_zLims, 'Enable', 'off');
+    set(handles.edit_zcLims, 'Enable', 'off');
     set(handles.pushbutton_ViewSeries, 'Enable', 'off');
     set(findall(handles.uipanel_3DARPESbrowser, '-property', 'enable'), 'enable', 'off');
 elseif handles.myData.Type == "Eb(kx,ky)" || handles.myData.Type == "Eb(kx,kz)"
     set(handles.edit_zLims, 'Enable', 'on');
+    set(handles.edit_zcLims, 'Enable', 'on');
     set(handles.pushbutton_ViewSeries, 'Enable', 'on');
     set(findall(handles.uipanel_3DARPESbrowser, '-property', 'enable'), 'enable', 'on');
     % -- Initialising the scan slider
@@ -236,6 +238,10 @@ handles = edit_zLims_Callback(handles.edit_zLims, [], handles);
 handles = edit_kfIndex_Callback(handles.edit_kfIndex, [], handles);
 handles = edit_kfPeakLocs_Callback(handles.edit_kfPeakLocs, [], handles);
 handles = edit_dKf_Callback(handles.edit_dKf, [], handles);
+% - Running data crop-limits
+handles = edit_xcLims_Callback(handles.edit_xcLims, [], handles);
+handles = edit_ycLims_Callback(handles.edit_ycLims, [], handles);
+handles = edit_zcLims_Callback(handles.edit_zcLims, [], handles);
 %% 5 - Updating UI elements if Kf has already been determined before
 if isfield(handles.myData, 'kf')
     % -- Activating the UI elements
@@ -617,7 +623,6 @@ if isempty(answer) || string(answer) == "No"; return; end
 %% Update handles structure
 guidata(hObject, handles);
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIND KF  %%%%%%%%%%
 
@@ -838,7 +843,6 @@ set(hObject,'String', handles.kf_args{9});
 fprintf("--> Kf uncertainty: " + string(handles.kf_args{9}) + " \n");
 %% Update handles structure
 guidata(hObject, handles);
-
 
 % --- Executes during object creation, after setting all properties.
 function edit_dKf_CreateFcn(hObject, ~, handles)
@@ -1480,7 +1484,7 @@ function dataStr = extract_kf(dataStr, kf_args)
 %   .(locs):                            tht/kx location of the peaks in the differentiated MDC.
 %   .(scan):                           z scan value of the MDC cut.s
 %   .(kf):                               kf of the MDC cut.
-    
+ 
 disp('Extracting Kf...')
 wbar = waitbar(0., 'Finding Kf...', 'Name', 'extract_kf');
 
