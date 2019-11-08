@@ -2369,7 +2369,7 @@ dataStr.meta.scan_args = scan_args;
 scan_lims = sort(scan_args{1});
 if length(scan_lims) == 1; scan_lims = [scan_lims(1), scan_lims(1)]; end
 mean_scan_indx = ceil(mean(scan_lims));
-xcorr_dE = 0.5;
+xcorr_dE = 0.4;
 %% 1 - EbAlign->Normalise->kConvert fields
 if isfield(dataStr, 'kx')
     % - Finding the indices to squeeze the 3D arrays into 2D

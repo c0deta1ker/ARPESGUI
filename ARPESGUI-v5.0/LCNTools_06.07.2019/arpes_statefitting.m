@@ -3064,10 +3064,12 @@ for i = 1:size(kx_crp,2)
          end
         %% - A.3 - Executing the curve fitting algorithm
         if input_args.fit_type{3} == "scan - lsqcurvefit()"
-            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqcurvefit(fn, ic_vector, eb_crp(:,i), data_crp(:,i), lb_vector, ub_vector);
+            options = optimoptions('lsqcurvefit','Diagnostics','On', 'MaxFunctionEvaluations', 1e6, 'MaxIterations', 1e6, 'StepTolerance', 1e-13);
+            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqcurvefit(fn, ic_vector, eb_crp(:,i), data_crp(:,i), lb_vector, ub_vector, options);
         elseif input_args.fit_type{3} == "scan - lsqnonlin()"
+            options = optimoptions('lsqnonlin','Diagnostics','On', 'MaxFunctionEvaluations', 1e6, 'MaxIterations', 1e6, 'StepTolerance', 1e-13);
             fun = @ (x) fn(x, eb_crp(:,i)) - data_crp(:,i);
-            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqnonlin(fun, ic_vector, lb_vector, ub_vector);
+            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqnonlin(fun, ic_vector, lb_vector, ub_vector, options);
         end
         ci1{i} = nlparci(beta1{i}, resid1{i}, 'jacobian', J1);
         %% - A.4 - Determination of the fitted value of Eb
@@ -3373,10 +3375,12 @@ for i = 1:size(eb_crp, 1)
         end
         %% - A.3 - Executing the curve fitting algorithm
         if input_args.fit_type{3} == "scan - lsqcurvefit()"
-            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqcurvefit(fn, ic_vector, kx_crp(i,:), data_crp(i,:)', lb_vector, ub_vector);
+            options = optimoptions('lsqcurvefit','Diagnostics','On', 'MaxFunctionEvaluations', 1e6, 'MaxIterations', 1e6, 'StepTolerance', 1e-13);
+            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqcurvefit(fn, ic_vector, kx_crp(i,:), data_crp(i,:)', lb_vector, ub_vector, options);
         elseif input_args.fit_type{3} == "scan - lsqnonlin()"
+            options = optimoptions('lsqnonlin','Diagnostics','On', 'MaxFunctionEvaluations', 1e6, 'MaxIterations', 1e6, 'StepTolerance', 1e-13);
             fun = @ (x) fn(x, kx_crp(i,:)) - data_crp(i,:);
-            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqnonlin(fun, ic_vector, lb_vector, ub_vector);
+            [beta1{i}, resnorm1{i}, resid1{i}, ~, ~, ~, J1] = lsqnonlin(fun, ic_vector, lb_vector, ub_vector, options);
         end
         ci1{i} = nlparci(beta1{i}, resid1{i}, 'jacobian', J1);
 
@@ -3439,7 +3443,8 @@ for n = 1:input_args.nStates
         lb_vector = [beta2{n-1}(1)-0.001, input_args.para{n,3}-0.1, beta2{n-1}(3)-0.02];
     end
     % -- Executing fit algorithm
-    [beta2{n}, resnorm2{n}, resid2{n}, ~, ~, ~, J2] = lsqcurvefit(fpara, ic_vector, kx_pts{n}, eb_pts{n}, lb_vector, ub_vector);
+    options = optimoptions('lsqcurvefit','Diagnostics','On', 'MaxFunctionEvaluations', 1e6, 'MaxIterations', 1e6, 'StepTolerance', 1e-13);
+    [beta2{n}, resnorm2{n}, resid2{n}, ~, ~, ~, J2] = lsqcurvefit(fpara, ic_vector, kx_pts{n}, eb_pts{n}, lb_vector, ub_vector, options);
     ci2{n} = nlparci(beta2{n}, resid2{n}, 'jacobian', J2);
 end
 
