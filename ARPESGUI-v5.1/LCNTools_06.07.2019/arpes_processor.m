@@ -281,13 +281,16 @@ if isequal(save_filepath,0) || isequal(save_filename,0); return; end
 %% 2 - Executing the saving of the processed data
 wbar=waitbar(0.5,'Saving...'); 
 dataStruc = handles.myData;
-
 save(char(save_fullfile), 'dataStruc', '-v7.3');
 disp('-> saved arpes data : '); display(handles.myData);
 close(wbar);
 %% 3 - Saving a figure with the data
 fig = view_data(handles.myData, handles.fig_args);
-print(fig, char(save_fullfile(1:end-4)+"_data.png"), '-dpng');
+print(fig, char(save_fullfile(1:end-4)+"_snap.png"), '-dpng');
+%% 4 - Saving a text file with all the info
+fileID = fopen(char(save_fullfile(1:end-4)+"_info.txt"), 'w');
+fprintf(fileID, handles.myData.meta.info);
+fclose(fileID);
 
 % --- Executes on button press in pushbutton_RESET.
 function pushbutton_RESET_Callback(hObject, ~, handles)
@@ -2611,7 +2614,6 @@ end
 %% - 2 -Data normalisation over all scans
 for i = 1:size(dataStr.(dField), 3)
     waitbar(i/size(dataStr.(dField), 3), wbar, 'Normalising ARPES data...', 'Name', 'normalise_data');
-    
     % - Extracting x-domain range
     minX = min(min(dataStr.(xField)(:,:,i))); maxX = max(max(dataStr.(xField)(:,:,i)));
     xRange = [0.95*minX+0.05*maxX 0.05*minX+0.95*maxX];
@@ -2619,7 +2621,6 @@ for i = 1:size(dataStr.(dField), 3)
     [~, DSlice1] = Cut(dataStr.(xField)(:,:,i), dataStr.(yField)(:,:,i), dataStr.(dField)(:,:,i), 'mdc', eWin);
     % - HWHM adjusted to suppress uneven sensitivity of the CCD channels
     DSlice1 = Gaco2(DSlice1, 10, 0);
-    
     % - Dividing the intensity to normalize to the energy window
     if norm_type == "standard"
         for j = 1:size(dataStr.(dField), 1)
@@ -2632,7 +2633,6 @@ for i = 1:size(dataStr.(dField), 3)
     elseif norm_type == "global max"
         dataStr.data = dataStr.(dField) / max(max(max(dataStr.(dField))));
     end
-    
     % - Subtracting angle integrated spectrum
    if edcScale ~= 0
         [~, ISubtr] = Cut(dataStr.(xField)(:,:,i), dataStr.(yField)(:,:,i), dataStr.(dField)(:,:,i), 'edc', xRange);
@@ -2641,7 +2641,6 @@ for i = 1:size(dataStr.(dField), 3)
         end   
    end
 end
-
 % - Forcing minimum value across all scans to be zero
 dataStr.data = dataStr.data - min(min(min(dataStr.data)));
 % - Forcing maximum value across all scans to be unity
@@ -3109,22 +3108,18 @@ for ipage=1:ceil(size(dataStr.(dField), 3)/nRows/nCols)
             if isfield(dataStr, 'kx')
                 ImData(dataStr.(xField)(1:step_size:end,1:step_size:end,n), dataStr.(yField)(1:step_size:end,1:step_size:end,n), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(zMidIndx,zMidIndx,n)), 'fontsize', 10);
-                xticks(round(-15:0.5:15, 2)); yticks(round(-1e3:3:1e3, 2));
             % - 2.2 - EbAlign->Normalise fields
             elseif isfield(dataStr, 'data')
                 ImData(dataStr.(xField)(1:step_size:end,1:step_size:end,n), dataStr.(yField)(1:step_size:end,1:step_size:end,n), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(n)), 'fontsize', 10);
-                xticks(round(-14:2:15, 2)); yticks(round(-1e3:3:1e3, 2));
             % - 2.3 - EbAlign fields
             elseif isfield(dataStr, 'eb')
                 ImData(dataStr.(xField)(1:step_size:end,1:step_size:end,n), dataStr.(yField)(1:step_size:end,1:step_size:end,n), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(n)), 'fontsize', 10);
-                xticks(round(-14:2:15, 2)); yticks(round(-1e3:3:1e3, 2));
             % - 2.4 - Raw, unprocessed data fields
             else
                 ImData(dataStr.(xField)(1:step_size:end), dataStr.(yField)(1:step_size:end), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(n)), 'fontsize', 10);
-                xticks(round(-14:2:15, 2)); yticks(round(-1e3:3:1e3, 2));
             end
             % - 2.5 - Formatting the figure
             minC = min(min(min(dataStr.(dField)(1:step_size:end,1:step_size:end,iframe))));
@@ -3144,7 +3139,7 @@ for ipage=1:ceil(size(dataStr.(dField), 3)/nRows/nCols)
                 cb.TickLabelInterpreter = 'latex'; cb.TickLength = 0.04;
                 cb.TickDirection = 'out';
                 % Colorbar position properties
-                cb.Position = [0.92, 0.8, 0.03 0.1];
+                cb.Position = [0.92, 0.8, 0.02 0.1];
                 % Colorbar box properties
                 cb.Color = [0 0 0]; cb.Box = 'on'; cb.LineWidth = 1.2;
             end

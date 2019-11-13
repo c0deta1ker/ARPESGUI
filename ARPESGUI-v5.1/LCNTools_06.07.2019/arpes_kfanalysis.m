@@ -22,7 +22,7 @@ function varargout = arpes_kfanalysis(varargin)
 
 % Edit the above text to modify the response to help arpes_kfanalysis
 
-% Last Modified by GUIDE v2.5 28-Jul-2019 21:37:22
+% Last Modified by GUIDE v2.5 13-Nov-2019 18:47:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -66,6 +66,7 @@ set(handles.pushbutton_ViewLatest, 'Enable', 'off');
 set(handles.pushbutton_INFO, 'Enable', 'off');
 set(handles.pushbutton_ViewSeries, 'Enable', 'off');
 set(handles.pushbutton_ViewKf, 'Enable', 'off');
+set(handles.pushbutton_KfVideo, 'Enable', 'off');
 set(handles.pushbutton_ViewROI, 'Enable', 'off');
 %% 3 - Setting ui-panels to inactive until data is loaded
 set(findall(handles.uipanel_3DARPESbrowser, '-property', 'enable'), 'enable', 'off');
@@ -104,6 +105,7 @@ set(handles.pushbutton_ViewLatest, 'Enable', 'off');
 set(handles.pushbutton_INFO, 'Enable', 'off');
 set(handles.pushbutton_ViewSeries, 'Enable', 'off');
 set(handles.pushbutton_ViewKf, 'Enable', 'off');
+set(handles.pushbutton_KfVideo, 'Enable', 'off');
 set(handles.pushbutton_ViewROI, 'Enable', 'off');
 %% 2 - Setting ui-panels to inactive until data is loaded
 set(findall(handles.uipanel_3DARPESbrowser, '-property', 'enable'), 'enable', 'off');
@@ -210,18 +212,17 @@ set(handles.pushbutton_TRANSFER, 'Enable', 'on');
 set(handles.pushbutton_INFO, 'Enable', 'on');
 set(handles.pushbutton_ViewLatest, 'Enable', 'on');
 set(handles.pushbutton_ViewKf, 'Enable', 'off');
+set(handles.pushbutton_KfVideo, 'Enable', 'off');
 set(handles.pushbutton_ViewROI, 'Enable', 'on');
 % -- Pop-up menus
 set(handles.popupmenu_kfType, 'Enable', 'off');
 % -- Setting the processing constraints based on the scan type
 if handles.myData.Type == "Eb(k)"
     set(handles.edit_zLims, 'Enable', 'off');
-    set(handles.edit_zcLims, 'Enable', 'off');
     set(handles.pushbutton_ViewSeries, 'Enable', 'off');
     set(findall(handles.uipanel_3DARPESbrowser, '-property', 'enable'), 'enable', 'off');
 elseif handles.myData.Type == "Eb(kx,ky)" || handles.myData.Type == "Eb(kx,kz)"
     set(handles.edit_zLims, 'Enable', 'on');
-    set(handles.edit_zcLims, 'Enable', 'on');
     set(handles.pushbutton_ViewSeries, 'Enable', 'on');
     set(findall(handles.uipanel_3DARPESbrowser, '-property', 'enable'), 'enable', 'on');
     % -- Initialising the scan slider
@@ -238,14 +239,11 @@ handles = edit_zLims_Callback(handles.edit_zLims, [], handles);
 handles = edit_kfIndex_Callback(handles.edit_kfIndex, [], handles);
 handles = edit_kfPeakLocs_Callback(handles.edit_kfPeakLocs, [], handles);
 handles = edit_dKf_Callback(handles.edit_dKf, [], handles);
-% - Running data crop-limits
-handles = edit_xcLims_Callback(handles.edit_xcLims, [], handles);
-handles = edit_ycLims_Callback(handles.edit_ycLims, [], handles);
-handles = edit_zcLims_Callback(handles.edit_zcLims, [], handles);
 %% 5 - Updating UI elements if Kf has already been determined before
 if isfield(handles.myData, 'kf')
     % -- Activating the UI elements
     set(handles.pushbutton_ViewKf, 'Enable', 'on');
+    set(handles.pushbutton_KfVideo, 'Enable', 'on');
     % -- Initialising the scan sliders
     if handles.myData.Type == "Eb(kx,ky)" || handles.myData.Type == "Eb(kx,kz)"
         set(handles.popupmenu_kfType, 'Enable', 'on');
@@ -1085,6 +1083,7 @@ handles.myData = extract_kf(handles.myData, handles.kf_args);
 %% 2 - Updating UI elements
 % -- Activating the UI elements
 set(handles.pushbutton_ViewKf, 'Enable', 'on');
+set(handles.pushbutton_KfVideo, 'Enable', 'on');
 % -- Updating UI elements as required
 if handles.myData.Type == "Eb(k)"
     handles = popupmenu_kfType_Callback(handles.popupmenu_kfType, [], handles);
@@ -1161,6 +1160,14 @@ function pushbutton_ViewKf_Callback(hObject, ~, handles)
 
 %% - Plotting the Kf figure
 view_kf(handles.myData, handles.kf_fig_args);
+
+% --- Executes on button press in pushbutton_KfVideo.
+function pushbutton_KfVideo_Callback(hObject, ~, handles)
+% hObject    handle to pushbutton_KfVideo (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% - Plot and save the Kf Fit Video
+view_kf_video(handles.myData.kf);
 
 % --- Executes on button press in pushbutton_ViewROI.
 function pushbutton_ViewROI_Callback(hObject, ~, handles)
@@ -1526,7 +1533,7 @@ elseif dataStr.Type == "Eb(kx,ky)" || dataStr.Type == "Eb(kx,kz)"
     [~, zIndxU] = min(abs(scan_values - zLims(2)));
     
     % -- Determination of the scan indices for global kf extraction
-    if kfType == "global - findpeaks()" || kfType == "global - max()"
+    if kfType == "global - findpeaks()" || kfType == "global - max()" || kfType == "global - fwhm()"
         if isfield(dataStr, 'kf'); dataStr = rmfield(dataStr, 'kf'); end
         scan_indxs = zIndxL:zIndxU;
         kf_indxs = 1:abs(zIndxU-zIndxL+1);
@@ -1592,10 +1599,17 @@ for i = 1:length(kf_indxs)
     
     % - 2.4 - Extracting the the peaks and locations
     % - Cropping MDC over x-limits defined by the user
-    [~, minXindx] = min(abs(XCut_diff2 - xLims(1)));
-    [~, maxXindx] = min(abs(XCut_diff2 - xLims(2)));
-    xcut = XCut_diff2(minXindx:maxXindx);
-    dcut = DCut_diff2(minXindx:maxXindx);
+    if kfType == "global - fwhm()" || kfType == "global - max()"
+        [~, minXindx] = min(abs(XCut_raw - xLims(1)));
+        [~, maxXindx] = min(abs(XCut_raw - xLims(2)));
+        xcut = XCut_raw(minXindx:maxXindx);
+        dcut = DCut_smth(minXindx:maxXindx);
+    else
+        [~, minXindx] = min(abs(XCut_diff2 - xLims(1)));
+        [~, maxXindx] = min(abs(XCut_diff2 - xLims(2)));
+        xcut = XCut_diff2(minXindx:maxXindx);
+        dcut = DCut_diff2(minXindx:maxXindx);
+    end
     % -- Initialising pks and locs arrays
     pks = []; locs = [];
     
@@ -1623,18 +1637,44 @@ for i = 1:length(kf_indxs)
     % -- For a global kf finding using max() function on LHS and RHS
     elseif kfType == "global - max()"
         % --- Splitting the MDC in half from the origin
-        [~, srt_indx] = min(abs(XCut_raw - 0));
-        lhs_xcut = XCut_raw(1:srt_indx); 
-        lhs_dcut = DCut_smth(1:srt_indx);
-        rhs_xcut = XCut_raw(srt_indx:end); 
-        rhs_dcut = DCut_smth(srt_indx:end);
+        [~, srt_indx] = min(abs(xcut - 0));
+        lhs_xcut = xcut(1:srt_indx); 
+        lhs_dcut = dcut(1:srt_indx);
+        rhs_xcut = xcut(srt_indx:end); 
+        rhs_dcut = dcut(srt_indx:end);
         % --- Extracting the peaks and locations from LHS and RHS
         [pks(1), srt_indx] = max(lhs_dcut(:)); 
         locs(1) = lhs_xcut(srt_indx);
         [pks(2), srt_indx] = max(rhs_dcut(:));
         locs(2) = rhs_xcut(srt_indx);
         % -- Extracting an estimate for the uncertainty based on max/min values
-        dKf = 0.01 .* abs(max(DCut_smth(:)) ./ (max(DCut_smth(:)) - min(DCut_smth(:))));
+        dKf = 0.01 .* abs(max(dcut(:)) ./ (max(dcut(:)) - min(dcut(:))));
+        
+    elseif kfType == "global - fwhm()"
+        % --- Extracting the peak
+        [peak, ~] = max(dcut(:));
+        noise = 0.5 * min(dcut(:));
+        % --- Extracting the indices for the FWHM estimation
+        % - lower bounds
+        idx1l = find(dcut(:) > 0.45 * peak + noise, 1, 'first');
+        idx2l = find(dcut(:) > 0.45 * peak + noise, 1, 'last');
+        % - upper bounds
+        idx1u = find(dcut(:) > 0.55 * peak + noise, 1, 'first');
+        idx2u = find(dcut(:) > 0.55 * peak + noise, 1, 'last');
+
+        if isempty(idx1l + idx2l + idx1u + idx2u) || peak / noise < 4
+            pks = [0, 0];
+            locs = [0, 0];
+            dKf = 0;           
+        else
+            % --- Extracting the peaks and locations from LHS and RHS
+            pks(1) = mean([dcut(idx1l), dcut(idx2l)]);
+            pks(2) = mean([dcut(idx1u), dcut(idx2u)]);
+            locs(1) = mean([xcut(idx1l), xcut(idx1u)]);
+            locs(2) = mean([xcut(idx2l), xcut(idx2u)]);
+            % -- Extracting an estimate for the uncertainty based on max/min values
+            dKf = mean([abs(xcut(idx1l) - xcut(idx1u)), abs(xcut(idx2l) - xcut(idx2u))]);
+        end
         
     % -- For a local kf finder at a specific kf-index using findpeaks()
     elseif kfType == "local - findpeaks()"
@@ -1676,6 +1716,8 @@ for i = 1:length(kf_indxs)
     kf = abs(diff(locs));
     
     % - 2.7 - Assigning the variables to the final data structure
+    dataStr.kf{kf_indxs(i)}.xField = xField;
+    dataStr.kf{kf_indxs(i)}.Type = dataStr.Type;
     dataStr.kf{kf_indxs(i)}.kf_args = kf_args;
     dataStr.kf{kf_indxs(i)}.XData = XData;
     dataStr.kf{kf_indxs(i)}.YData = YData;
@@ -2072,22 +2114,18 @@ for ipage=1:ceil(size(dataStr.(dField), 3)/nRows/nCols)
             if isfield(dataStr, 'kx')
                 ImData(dataStr.(xField)(1:step_size:end,1:step_size:end,n), dataStr.(yField)(1:step_size:end,1:step_size:end,n), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(zMidIndx,zMidIndx,n)), 'fontsize', 10);
-                xticks(round(-15:0.5:15, 2)); yticks(round(-1e3:3:1e3, 2));
             % - 2.2 - EbAlign->Normalise fields
             elseif isfield(dataStr, 'data')
                 ImData(dataStr.(xField)(1:step_size:end,1:step_size:end,n), dataStr.(yField)(1:step_size:end,1:step_size:end,n), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(n)), 'fontsize', 10);
-                xticks(round(-14:2:15, 2)); yticks(round(-1e3:3:1e3, 2));
             % - 2.3 - EbAlign fields
             elseif isfield(dataStr, 'eb')
                 ImData(dataStr.(xField)(1:step_size:end,1:step_size:end,n), dataStr.(yField)(1:step_size:end,1:step_size:end,n), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(n)), 'fontsize', 10);
-                xticks(round(-14:2:15, 2)); yticks(round(-1e3:3:1e3, 2));
             % - 2.4 - Raw, unprocessed data fields
             else
                 ImData(dataStr.(xField)(1:step_size:end), dataStr.(yField)(1:step_size:end), dataStr.(dField)(1:step_size:end,1:step_size:end,n));
                 title(sprintf('scan = %.2f', dataStr.(zField)(n)), 'fontsize', 10);
-                xticks(round(-14:2:15, 2)); yticks(round(-1e3:3:1e3, 2));
             end
             % - 2.5 - Formatting the figure
             minC = min(min(min(dataStr.(dField)(1:step_size:end,1:step_size:end,iframe))));
@@ -2107,7 +2145,7 @@ for ipage=1:ceil(size(dataStr.(dField), 3)/nRows/nCols)
                 cb.TickLabelInterpreter = 'latex'; cb.TickLength = 0.04;
                 cb.TickDirection = 'out';
                 % Colorbar position properties
-                cb.Position = [0.92, 0.8, 0.03 0.1];
+                cb.Position = [0.92, 0.8, 0.02 0.1];
                 % Colorbar box properties
                 cb.Color = [0 0 0]; cb.Box = 'on'; cb.LineWidth = 1.2;
             end
@@ -2350,5 +2388,194 @@ elseif dataStr.Type == "Eb(kx,kz)"
 end
 ylabel('$$ \bf  k_F (\AA^{-1}) $$', 'Interpreter', 'latex');
 title('Kf vs scan parameter', 'interpreter', 'none', 'fontsize', 12);
+
+% --- Function to plot a video of the kf data extraction
+function view_kf_video(kfCell)
+% view_kf_video(dataStr, view3D_args)
+%   This function plots the Eb(kx) ARPES image as a function
+%   of the scan parameter.
+%
+%   REQ. FUNCTIONS:
+%   -   gca_properties(type)
+%   -   [h=] ImData(X,Y,Z[,style])
+%
+%   IN:
+%   -   kfCell:                MATLAB cell structure of all the Kf analysis
+%
+%   OUT:
+%   -   video output.
+
+%% Initialisation to save the video as a .avi file
+filter = {'*.avi'};
+[save_filename, save_filepath] = uiputfile(filter);
+fname = char(string(save_filepath) + string(save_filename));
+% If Cancel is pressed, then return nothing
+if isequal(save_filepath,0) || isequal(save_filename,0); return; end
+% Else proceed with the video plotting
+disp('-> kF fit video...')
+wbar = waitbar(0., 'Plotting the kF fit video...', 'Name', 'view_kf_video');
+
+%% 1 - Initialising variables for the video
+% - Initialising the frames
+nFrames = length(kfCell);
+vidObj = VideoWriter(fname);
+vidObj.FrameRate = 10;
+open(vidObj);
+
+%% 2 - Running the Eb(k) vs scan parameter frame-by-frame
+fig = figure(); set(fig, 'Position', [1,1,950,650]);
+for f = 1:nFrames
+    waitbar(f/nFrames, wbar, 'Plotting kf fit video...', 'Name', 'view_kf_video');
+    % - Reset the figure
+    set(0, 'CurrentFigure', fig);
+    cla reset; clf reset; delete(findall(gcf,'type','annotation'))
+    
+    %% 1 - Plotting the Eb(k) at the scan value
+    subplot(2,2,1); hold on;
+    % - Plotting the Eb(k) ARPES image
+    ImData(kfCell{f}.XData, kfCell{f}.YData, kfCell{f}.DData);
+    % - General formatting of the figure
+    gca_properties(kfCell{f}.xField); colorbar('off');
+    % - Plotting patch of the uncertainty area for peak location 1
+    x = [kfCell{f}.locs(1)-kfCell{f}.dKf,...
+        kfCell{f}.locs(1)+kfCell{f}.dKf,...
+        kfCell{f}.locs(1)+kfCell{f}.dKf,...
+        kfCell{f}.locs(1)-kfCell{f}.dKf,...
+        kfCell{f}.locs(1)-kfCell{f}.dKf];
+    y = [-1e8, -1e8, 1e8, 1e8, -1e8];
+    patch(x, y, [0.2, 0.2, 0.8], 'FaceAlpha',0.2, 'EdgeColor', [0.2, 0.2, 0.8]);
+    line([kfCell{f}.locs(1), kfCell{f}.locs(1)], [-1e8, 1e8], 'Color', [0.2,0.2,0.8,0.8], 'LineWidth', 2.5, 'Linestyle', '-');
+    % - Plotting patch of the uncertainty area for peak location 2
+    x = [kfCell{f}.locs(2)-kfCell{f}.dKf,...
+        kfCell{f}.locs(2)+kfCell{f}.dKf,...
+        kfCell{f}.locs(2)+kfCell{f}.dKf,...
+        kfCell{f}.locs(2)-kfCell{f}.dKf,...
+        kfCell{f}.locs(2)-kfCell{f}.dKf];
+    y = [-1e8, -1e8, 1e8, 1e8, -1e8];
+    patch(x, y, [0.2, 0.2, 0.8], 'FaceAlpha',0.2, 'EdgeColor', [0.2, 0.2, 0.8]);
+    line([kfCell{f}.locs(2), kfCell{f}.locs(2)], [-1e8, 1e8], 'Color', [0.2,0.2,0.8,0.8], 'LineWidth', 2.5, 'Linestyle', '-');
+
+    % - Plotting theROI cut for the MDC
+    x = [-1e8, 1e8, 1e8, -1e8, -1e8];
+    y = [kfCell{f}.kf_args{4}(1), kfCell{f}.kf_args{4}(1),...
+        kfCell{f}.kf_args{4}(2), kfCell{f}.kf_args{4}(2),...
+        kfCell{f}.kf_args{4}(1)];
+    patch(x, y, [0.2, 0.8, 0.2], 'FaceAlpha',0.2, 'EdgeColor', [0.2, 0.8, 0.2]);
+    % - Axes limits
+    caxis([min(kfCell{f}.DCut_smth(:)), 1.5*max(kfCell{f}.DCut_smth(:))]);
+    axis([kfCell{f}.kf_args{5}, kfCell{f}.kf_args{4}(1)-0.25, kfCell{f}.kf_args{4}(2)+0.25]);
+    % - Adding title to the figure
+    title(sprintf("Eb(kx); kf index - %i", f), 'interpreter', 'none', 'fontsize', 12);
+
+    %% 2.0 - Plotting a summary of the MDC analysis
+    subplot(2,1,2); hold on;
+    % - Plotting raw MDC cut
+    plot(kfCell{f}.XCut_raw, kfCell{f}.DCut_raw, '.-', 'linewidth', 4, 'color', [0.5,0.5,0.5,0.5]);
+    % - Plotting smoothed MDC cut
+    plot(kfCell{f}.XCut_raw, kfCell{f}.DCut_smth, '-', 'linewidth', 2, 'color', [0,0,0]);
+    % - General figure formatting
+    ax = gca;
+    % Font properties
+    ax.FontName = 'Helvetica'; ax.FontWeight = 'normal'; ax.FontSize = 15;
+    % Tick properties
+    ax.TickLabelInterpreter = 'latex';
+    ax.XMinorTick = 'on'; ax.YMinorTick = 'on';
+    ax.TickDir = 'out';
+    ax.TickLength = [0.01 0.025];
+    ax.XColor = [0 0 0]; ax.YColor = [0 0 0];
+    % Ruler properties
+    ax.XAxisLocation = 'bottom';            % 'bottom' | 'top' | 'origin'
+    ax.YAxisLocation = 'left';                   % 'left' | 'right' | 'origin'
+    % Box Styling properties
+    ax.LineWidth = 1.5;
+    ax.Box = 'off'; ax.Layer = 'Top';
+    % Axis labels and limits
+    if string(kfCell{f}.xField) == "kx"
+        xlabel('$$ \bf  k_x (\AA^{-1}) $$', 'Interpreter', 'latex');
+    else
+        xlabel('$$ \bf  \theta (^{\circ}) $$', 'Interpreter', 'latex');
+    end
+    ylabel('$$ \bf  MDC $$ $$\bf intensity$$ $$\bf (arb.)$$', 'Interpreter', 'latex');
+    xlim([min(kfCell{f}.XCut_raw(:)), max(kfCell{f}.XCut_raw(:))]);
+    title(sprintf("MDC cut %i; Extract KF", f), 'interpreter', 'none', 'fontsize', 12);
+    %% 2.2 - Plotting a summary of the MDC second derivative
+    yyaxis right;
+    y2col = [0.91 0.41 0.17 0.8];
+    ax.YColor = y2col;
+    % - Plotting the derivative of the two
+    plot(kfCell{f}.XCut_diff, kfCell{f}.DCut_diff, '-', 'linewidth', 2, 'color', y2col);
+    % - Plotting patch of the uncertainty area for peak location 1
+    x = [kfCell{f}.locs(1)-kfCell{f}.dKf,...
+        kfCell{f}.locs(1)+kfCell{f}.dKf,...
+        kfCell{f}.locs(1)+kfCell{f}.dKf,...
+        kfCell{f}.locs(1)-kfCell{f}.dKf,...
+        kfCell{f}.locs(1)-kfCell{f}.dKf];
+    y = [-1e8, -1e8, 1e8, 1e8, -1e8];
+    patch(x, y, [0.2, 0.2, 0.8], 'FaceAlpha',0.2, 'EdgeColor', [0.2, 0.2, 0.8]);
+    line([kfCell{f}.locs(1), kfCell{f}.locs(1)], [-1e8, 1e8], 'Color', [0.2,0.2,0.8,0.8], 'LineWidth', 2.5, 'Linestyle', '-');
+    % - Plotting patch of the uncertainty area for peak location 2
+    x = [kfCell{f}.locs(2)-kfCell{f}.dKf,...
+        kfCell{f}.locs(2)+kfCell{f}.dKf,...
+        kfCell{f}.locs(2)+kfCell{f}.dKf,...
+        kfCell{f}.locs(2)-kfCell{f}.dKf,...
+        kfCell{f}.locs(2)-kfCell{f}.dKf];
+    y = [-1e8, -1e8, 1e8, 1e8, -1e8];
+    patch(x, y, [0.2, 0.2, 0.8], 'FaceAlpha',0.2, 'EdgeColor', [0.2, 0.2, 0.8]);
+    line([kfCell{f}.locs(2), kfCell{f}.locs(2)], [-1e8, 1e8], 'Color', [0.2,0.2,0.8,0.8], 'LineWidth', 2.5, 'Linestyle', '-');
+    % - General formatting
+    ylim([min(kfCell{f}.DCut_diff(:)), max(kfCell{f}.DCut_diff(:))]);
+    ylabel('$$ \bf  d^2y/dx^2 (arb.) $$', 'Interpreter', 'latex');
+    %% 2.3 - Adding a legend to the figure
+    h = zeros(4, 1);
+    h(1) = plot(NaN,NaN,'.-', 'linewidth', 5, 'color', [0.5,0.5,0.5,0.5]);
+    h(2) = plot(NaN,NaN,'-', 'linewidth', 5, 'color', [0,0,0]);
+    h(3) = plot(NaN,NaN,'-', 'linewidth', 5, 'color', [0.91 0.41 0.17]);
+    h(4) = plot(NaN,NaN,'-', 'linewidth', 5, 'color', [0.2,0.2,0.8,0.8]);
+    legend(h, {'$$ MDC_{data} $$','$$ MDC_{smooth} $$','$$ d^2y/dx^2$$ ', '$$ k_{edge}$$ '}, 'interpreter', 'latex');
+
+    %% 3 - Plotting kf vs the scan parameter
+    subplot(2,2,2); hold on;
+    % - Plotting kf vs scan parameter for all values
+    for i = 1:length(kfCell)
+        errorbar(kfCell{i}.scan, kfCell{i}.kf, kfCell{i}.dKf, 's', 'markersize', 5, 'color', [0,0,0], 'markerfacecolor', [0,0,0]);
+    end
+    % - Plotting kf vs scan parameter for the selected scan
+    stem(kfCell{f}.scan, kfCell{f}.kf, '.', 'linewidth', 1.5, 'color', [0.2,0.2,0.8]);
+    % - General figure formatting
+    ax = gca;
+    % Font properties
+    ax.FontName = 'Helvetica'; ax.FontWeight = 'normal'; ax.FontSize = 15;
+    % Tick properties
+    ax.TickLabelInterpreter = 'latex';
+    ax.XMinorTick = 'on'; ax.YMinorTick = 'on';
+    ax.TickDir = 'out';
+    ax.TickLength = [0.01 0.025];
+    ax.XColor = [0 0 0]; ax.YColor = [0 0 0];
+    % Ruler properties
+    ax.XAxisLocation = 'bottom';            % 'bottom' | 'top' | 'origin'
+    ax.YAxisLocation = 'left';                   % 'left' | 'right' | 'origin'
+    % Box Styling properties
+    ax.LineWidth = 1.5;
+    ax.Box = 'off'; ax.Layer = 'Top';
+    % Axis labels and limits
+    % Axis labels and limits
+    if kfCell{f}.Type == "Eb(kx,ky)"
+        if string(kfCell{f}.xField) == "kx"; xlabel('$$ \bf  k_y (\AA^{-1}) $$', 'Interpreter', 'latex'); 
+        else; xlabel('$$ \bf  \tau (^{\circ}) $$', 'Interpreter', 'latex');
+        end
+    elseif kfCell{f}.Type == "Eb(kx,kz)"
+        if string(kfCell{f}.xField) == "kx"; xlabel('$$ \bf  k_z (\AA^{-1}) $$', 'Interpreter', 'latex'); 
+        else; xlabel('$$ \bf  \theta (^{\circ}) $$', 'Interpreter', 'latex');
+        end
+    end
+    ylabel('$$ \bf  k_F (\AA^{-1}) $$', 'Interpreter', 'latex');
+    title('Kf vs scan parameter', 'interpreter', 'none', 'fontsize', 12);
+   %% Adding the current figure as a frame to the video dataObject
+    mov = getframe(gcf);          %add current figure as frame
+    writeVideo(vidObj,mov);     %write frame to vidObj
+end
+close(vidObj);
+%% Close wait-bar
+close(wbar);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% The End %%%%%%%%%%%%%%%%%%%%

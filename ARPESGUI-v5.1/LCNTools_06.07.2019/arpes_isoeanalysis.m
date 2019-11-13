@@ -171,6 +171,7 @@ function pushbutton_TRANSFER_Callback(hObject, ~, handles)
 %% Transfer requested data to the MATLAB workspace
 if isfield(handles, 'myData'); assignin('base','arpes_data',handles.myData);end
 if isfield(handles, 'myBZ'); assignin('base','arpes_bz',handles.myBZ); end
+if isfield(handles, 'myLPs'); assignin('base','arpes_lp',handles.myLPs); end
 
 % --- Executes on button press in pushbutton_INFO.
 function pushbutton_INFO_Callback(hObject, ~, handles)
@@ -273,8 +274,8 @@ wbar=waitbar(0.5,'Saving...');
 dataStruc = [];
 dataStruc.data = handles.myData;
 if isfield(handles, 'myBZ'); dataStruc.bz = handles.myBZ; end
-if isfield(handles, 'myLPs'); dataStruc.line_profiles = handles.myLPs; end
-if isfield(handles, 'mySAs'); dataStruc.area_profiles = handles.mySAs; end
+if isfield(handles, 'myLPs'); dataStruc.lp = handles.myLPs; end
+if isfield(handles, 'mySAs'); dataStruc.sa = handles.mySAs; end
 save(char(save_fullfile), 'dataStruc', '-v7.3');
 disp('-> saved arpes isoe analysis : '); 
 display(dataStruc);
@@ -2780,6 +2781,8 @@ function dataStr = load_isoe_data(FileNames)
 %
 %   OUT:
 %   dataStr - MATLAB data structure containing all data below.
+%
+%   .(data){x} -- MATLAB data structure containing all ARPES data and analysis for FileName 'x';
 %   -   .(H5file):                 string of the raw .H5 filename of the data.
 %	-   .(Type):                   string "Eb(k)", "Eb(kx,ky)" or "Eb(kx,kz)".
 %	-   .(meta.info):            [1xN] char array of scan information.
@@ -2806,10 +2809,26 @@ function dataStr = load_isoe_data(FileNames)
 % -- after analysing kf
 %	-   .(kf):                        MATLAB data structure containing all kf analysis.
 % -- after analysing isoe
-%	-   .(isoe):                    MATLAB data structure containing all isoe analysis.
+%	-   .(isoe):                    MATLAB data structure containing all isoe analysis as cells.
+%
+%   .(bz) -- MATLAB data structure containing all Brilluoin Zone analysis;
+%   -   .(bz_args):                       {'FCC-Oh'  [5.4310 5.4310 5.4310]  [90 90 90]  ["(001)"]}
+%	-   .(realStr):                         real space crystal information.
+%	-   .(reciStr):                         reciprocal space crystal information.
+%	-   .(overlay):                        Brilluoin Zone overlay plots for ARPES IsoE cuts.
+%
+%   .(lp) -- MATLAB data structure containing all appended line-profiles;
+%   -   .(kx):                        2D or 3D array of kx from the Theta angle.
+%	-   .(ky):                        1D, 2D or 3D array of kx from the Tilt angle.
+%	-   .(kz):                        1D, 2D or 3D array of kx from the Photon Energy.
+%
+%   .(sa) -- MATLAB data structure containing all surface area calculations;
+
+
+
 %	-   .(bz):                       MATLAB data structure containing all Brilluoin Zone analysis.
-% -- after executing state-fitting
-%	-   .(fits):                     MATLAB data structure containing all fitting analysis.
+%	-   .(lp):                        MATLAB data structure containing all appended line-profiles.
+%	-   .(sa):                       MATLAB data structure containing all surface area calculations.
 
 %% Displaying function and initialising wait-bar
 disp('Loading processed ARPES data...')
@@ -3967,7 +3986,7 @@ if plotFig == 1
     axis([-planeStr.gX, planeStr.gX, -planeStr.gY, planeStr.gY]*1.05);
 end
 
-% ---  Function to extract the Iso-surface given the slice range
+% ---  Function to extract the surface area over a region of interest
 function dataStr = surface_area_extraction(dataStr, sa_args)
 % dataStr = surface_area_extraction(dataStr, sa_args)
 %   This function determines the area over some threshold that is defined
