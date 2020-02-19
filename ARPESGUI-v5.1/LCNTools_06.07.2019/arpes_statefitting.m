@@ -214,7 +214,7 @@ screen_size(1) = screen_pos(1);
 screen_size(2) = screen_pos(2);
 screen_size(3) = 1037;
 screen_size(4) = 530;
-set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_statefitting');s
+set(handles.figure1,'Units','Pixels','Position',screen_size, 'name', 'arpes_statefitting');
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -3147,7 +3147,8 @@ function fitStr = mdc_fitter(fitStr, input_args)
 disp('Fitting the MDCs...')
 wbar = waitbar(0., 'Performing MDC fits...', 'Name', 'mdc_fitter');
 fitStr.mdc_fits{input_args.scan{1}(1)} = [];
-
+threshold_val = {0.01, 0.008};
+cutoff_val = {0.009, 0.01};
 %% 1.0 - Defining the singlet state functions to use
 if string(input_args.mdc{1,2}) == "lorentzian"
     f1 = @(x, xdat) (Lorz(x(1), x(2), x(3), xdat) + x(4));
@@ -3293,8 +3294,8 @@ for i = 1:size(eb_crp, 1)
                 ub{n,4} = ic{n,4} + input_args.para{n,2};
                 % ---- Forcing the peak intensity to be zero if below predicted value of Eb
                 if input_args.para{n,5} > 0
-                    if round(eb_pts{n}(i), 4) < (round(input_args.para{n,3}, 4)-0.01)
-                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-0.01));
+                    if round(eb_pts{n}(i), 4) < (round(input_args.para{n,3}, 4)-threshold_val{n})
+                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-threshold_val{n}));
                         ic{n,1} = 0; lb{n,1} = 0; ub{n,1} = 2*input_args.mdc{n,3}(1); 
                         ic{n,3} = 0; lb{n,3} = -0.001; ub{n,3} = 0.001;
                         ic{n,4} = 0; lb{n,4} = -0.001; ub{n,4} = 0.001;
@@ -3304,8 +3305,8 @@ for i = 1:size(eb_crp, 1)
                         ub{n,1} = input_args.mdc{n,3}(2);
                     end
                 else
-                    if round(eb_pts{n}(i), 4) > (round(input_args.para{n,3}, 4)-0.01)
-                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-0.01));
+                    if round(eb_pts{n}(i), 4) > (round(input_args.para{n,3}, 4)-threshold_val{n})
+                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-threshold_val{n}));
                         ic{n,1} = 0; lb{n,1} = 0; ub{n,1} = 2*input_args.mdc{n,3}(1); 
                         ic{n,3} = 0; lb{n,3} = -0.001; ub{n,3} = 0.001;
                         ic{n,4} = 0; lb{n,4} = -0.001; ub{n,4} = 0.001;
@@ -3326,8 +3327,13 @@ for i = 1:size(eb_crp, 1)
                 ub{n,5} = ic{n,5} + input_args.para{n,2};
                 % ---- Forcing the peak intensity to be zero if below predicted value of Eb
                 if input_args.para{n,5} > 0
-                    if round(eb_pts{n}(i), 4) < (round(input_args.para{n,3}, 4)-0.01)
-                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-0.01));
+                    if round(eb_pts{n}(i), 4) < (round(input_args.para{n,3}, 4) - 2*threshold_val{n})
+                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-threshold_val{n}));
+                        ic{n,1} = input_args.mdc{n,3}(1); lb{n,1} = 0; ub{n,1} = 0.5*input_args.mdc{n,3}(1); 
+                        ic{n,2} = input_args.mdc{n,3}(1); lb{n,2} = 0; ub{n,2} = 0.5*input_args.mdc{n,3}(1); 
+                        ic{n,4} = 0; lb{n,4} = -0.001; ub{n,4} = 0.001;
+                        ic{n,5} = 0; lb{n,5} = -0.001; ub{n,5} = 0.001;
+                    elseif round(eb_pts{n}(i), 4) < (round(input_args.para{n,3}, 4) - threshold_val{n})
                         ic{n,1} = input_args.mdc{n,3}(1); lb{n,1} = 0; ub{n,1} = 2*input_args.mdc{n,3}(1); 
                         ic{n,2} = input_args.mdc{n,3}(1); lb{n,2} = 0; ub{n,2} = 2*input_args.mdc{n,3}(1); 
                         ic{n,4} = 0; lb{n,4} = -0.001; ub{n,4} = 0.001;
@@ -3341,8 +3347,8 @@ for i = 1:size(eb_crp, 1)
                         ub{n,2} = input_args.mdc{n,3}(2);
                     end
                 else
-                    if round(eb_pts{n}(i), 4) > (round(input_args.para{n,3}, 4)-0.01)
-                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-0.01));
+                    if round(eb_pts{n}(i), 4) > (round(input_args.para{n,3}, 4)-threshold_val{n})
+                        diff = 1/abs(round(eb_pts{n}(i), 4) - (round(input_args.para{n,3}, 4)-threshold_val{n}));
                         ic{n,1} = input_args.mdc{n,3}(1); lb{n,1} = 0; ub{n,1} = 2*input_args.mdc{n,3}(1); 
                         ic{n,2} = input_args.mdc{n,3}(1); lb{n,2} = 0; ub{n,2} = 2*input_args.mdc{n,3}(1); 
                         ic{n,4} = 0; lb{n,4} = -0.001; ub{n,4} = 0.001;
@@ -3405,12 +3411,12 @@ eb_pts_new = {}; kx_pts_new = {};
 for n = 1:input_args.nStates
     l = 1;
     for i = 1:size(eb_pts{n}, 1)
-        if input_args.para{n,5} > 0 && round(eb_pts{n}(i,1), 3) >= (round(input_args.para{n,3}, 4)-0.008)
+        if input_args.para{n,5} > 0 && round(eb_pts{n}(i,1), 4) >= (round(input_args.para{n,3}, 4)-cutoff_val{n})
             eb_pts_new{n}(l,1) = eb_pts{n}(i,1);
             kx_pts_new{n}(l,1) = kx_pts{n}(i,1);
             kx_pts_new{n}(l,2) = kx_pts{n}(i,2);
             l = l+1;
-        elseif input_args.para{n,5} < 0 && round(eb_pts{n}(i,1), 3) <= (round(input_args.para{n,3}, 4)-0.008)
+        elseif input_args.para{n,5} < 0 && round(eb_pts{n}(i,1), 4) <= (round(input_args.para{n,3}, 4)-cutoff_val{n})
             eb_pts_new{n}(l,1) = eb_pts{n}(i,1);
             kx_pts_new{n}(l,1) = kx_pts{n}(i,1);
             kx_pts_new{n}(l,2) = kx_pts{n}(i,2);

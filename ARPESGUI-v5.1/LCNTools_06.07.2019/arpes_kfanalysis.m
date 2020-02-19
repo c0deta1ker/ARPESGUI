@@ -22,7 +22,7 @@ function varargout = arpes_kfanalysis(varargin)
 
 % Edit the above text to modify the response to help arpes_kfanalysis
 
-% Last Modified by GUIDE v2.5 13-Nov-2019 18:47:44
+% Last Modified by GUIDE v2.5 25-Nov-2019 15:28:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -637,7 +637,7 @@ data_entry = string(contents{get(hObject,'Value')});
 % - For an Eb(kx,ky) or Eb(kx,kz) type that has kf determined
 if isfield(handles.myData, 'kf') && (handles.myData.Type == "Eb(kx,ky)" || handles.myData.Type == "Eb(kx,kz)")
     set(hObject, 'Enable', 'on'); 
-    if data_entry == "global - findpeaks()" || data_entry == "global - max()"
+    if data_entry == "global - findpeaks()" || data_entry == "global - max()" || data_entry == "global - fwhm()" || data_entry == "global - fwhm() - fixed peak"
         set(handles.edit_mdcLims, 'Enable', 'on');
         set(handles.edit_xLims, 'Enable', 'on');
         set(handles.edit_zLims, 'Enable', 'on');
@@ -673,7 +673,7 @@ elseif ~isfield(handles.myData, 'kf') && (handles.myData.Type == "Eb(kx,ky)" || 
 % - For an Eb(k) type that has had kf determined
 elseif isfield(handles.myData, 'kf') && handles.myData.Type == "Eb(k)"
     set(hObject, 'Enable', 'on'); 
-    if data_entry == "global - findpeaks()" || data_entry == "global - max()"
+    if data_entry == "global - findpeaks()" || data_entry == "global - max()" || data_entry == "global - fwhm()" || data_entry == "global - fwhm() - fixed peak"
         set(handles.edit_mdcLims, 'Enable', 'on');
         set(handles.edit_xLims, 'Enable', 'on');
         set(handles.edit_zLims, 'Enable', 'off');
@@ -1533,7 +1533,7 @@ elseif dataStr.Type == "Eb(kx,ky)" || dataStr.Type == "Eb(kx,kz)"
     [~, zIndxU] = min(abs(scan_values - zLims(2)));
     
     % -- Determination of the scan indices for global kf extraction
-    if kfType == "global - findpeaks()" || kfType == "global - max()" || kfType == "global - fwhm()"
+    if kfType == "global - findpeaks()" || kfType == "global - max()" || kfType == "global - fwhm()" || kfType == "global - fwhm() - fixed peak"
         if isfield(dataStr, 'kf'); dataStr = rmfield(dataStr, 'kf'); end
         scan_indxs = zIndxL:zIndxU;
         kf_indxs = 1:abs(zIndxU-zIndxL+1);
@@ -1551,6 +1551,36 @@ elseif dataStr.Type == "Eb(kx,ky)" || dataStr.Type == "Eb(kx,kz)"
             kf_indxs = kfIndex(1):kfIndex(2);
             scan_indxs = zIndxL+(kfIndex(1)-1):zIndxL+(kfIndex(2)-1);
         end
+    end
+end
+
+% -- Determination of the maximum value for the cuts
+if kfType == "global - fwhm() - fixed peak"
+    for i = 1:length(kf_indxs)
+        % - Extracting the ROI ARPES variables and data
+        if isfield(dataStr, 'kx') || isfield(dataStr, 'data') || isfield(dataStr, 'eb')
+            XData = dataStr.(xField)(:,:,scan_indxs(i));
+            YData = dataStr.(yField)(:,:,scan_indxs(i));
+            DData = dataStr.(dField)(:,:,scan_indxs(i));
+        else
+            XData = dataStr.(xField);
+            YData = dataStr.(yField);
+            DData = dataStr.(dField)(:,:,scan_indxs(i));
+        end
+        % - 2.1 - Extracting raw MDC cut
+        [XCut_raw, DCut_raw] = Cut(XData, YData, DData, 'mdc', mdcLims);
+        % - 2.2 - Smoothing the MDC cut
+        if smoothtype == "None"
+            DCut_smth = DCut_raw;
+        elseif smoothtype == "Gaco2"
+            DCut_smth = Gaco2(DCut_raw, hwX, hwX);
+        elseif smoothtype == "Binomial"
+            coeff = ones(1, 24);
+            DCut_smth = filter(coeff, hwX, DCut_raw);
+        elseif smoothtype == "Savitzky-Golay"
+            DCut_smth = sgolayfilt(DCut_raw, hwX, 11);
+        end
+        mdc_dat(:,i) = DCut_smth;
     end
 end
 
@@ -1599,7 +1629,7 @@ for i = 1:length(kf_indxs)
     
     % - 2.4 - Extracting the the peaks and locations
     % - Cropping MDC over x-limits defined by the user
-    if kfType == "global - fwhm()" || kfType == "global - max()"
+    if kfType == "global - fwhm()" || kfType == "global - max()" || kfType == "global - fwhm() - fixed peak"
         [~, minXindx] = min(abs(XCut_raw - xLims(1)));
         [~, maxXindx] = min(abs(XCut_raw - xLims(2)));
         xcut = XCut_raw(minXindx:maxXindx);
@@ -1650,22 +1680,35 @@ for i = 1:length(kf_indxs)
         % -- Extracting an estimate for the uncertainty based on max/min values
         dKf = 0.01 .* abs(max(dcut(:)) ./ (max(dcut(:)) - min(dcut(:))));
         
-    elseif kfType == "global - fwhm()"
+    elseif kfType == "global - fwhm()" || kfType == "global - fwhm() - fixed peak"
+        % --- Linear interpolation of data
+        xcuti = linspace(min(xcut(:)), max(xcut(:)), 5e3)';
+        dcuti = interp1q(xcut', dcut', xcuti);
+        xcut = xcuti;
+        dcut = dcuti;
         % --- Extracting the peak
-        [peak, ~] = max(dcut(:));
-        noise = 0.5 * min(dcut(:));
+        if kfType == "global - fwhm() - fixed peak"
+            peak = 0.75*max(mdc_dat(:));
+            noise =  min(mdc_dat(:));
+        elseif kfType == "global - fwhm()"
+            peak = max(dcut(:));
+            noise = min(dcut(:));
+        end
         % --- Extracting the indices for the FWHM estimation
         % - lower bounds
-        idx1l = find(dcut(:) > 0.45 * peak + noise, 1, 'first');
-        idx2l = find(dcut(:) > 0.45 * peak + noise, 1, 'last');
+        idx1l = find(dcut(:) > 0.4 * peak + 0.5*noise, 1, 'first');
+        idx2l = find(dcut(:) > 0.4 * peak + 0.5*noise, 1, 'last');
         % - upper bounds
-        idx1u = find(dcut(:) > 0.55 * peak + noise, 1, 'first');
-        idx2u = find(dcut(:) > 0.55 * peak + noise, 1, 'last');
-
-        if isempty(idx1l + idx2l + idx1u + idx2u) || peak / noise < 4
+        idx1u = find(dcut(:) > 0.6 * peak + 0.5*noise, 1, 'first');
+        idx2u = find(dcut(:) > 0.6 * peak + 0.5*noise, 1, 'last');
+        if isempty(idx1l + idx2l + idx1u + idx2u) || (peak-noise) / noise < 2
             pks = [0, 0];
             locs = [0, 0];
-            dKf = 0;           
+            dKf = 0;     
+%         elseif abs(peak - dcut(idx1l)) < 0.2*noise || abs(peak - dcut(idx2l)) < 0.2*noise
+%             pks = [0, 0];
+%             locs = [0, 0];
+%             dKf = 0;  
         else
             % --- Extracting the peaks and locations from LHS and RHS
             pks(1) = mean([dcut(idx1l), dcut(idx2l)]);
@@ -1675,6 +1718,8 @@ for i = 1:length(kf_indxs)
             % -- Extracting an estimate for the uncertainty based on max/min values
             dKf = mean([abs(xcut(idx1l) - xcut(idx1u)), abs(xcut(idx2l) - xcut(idx2u))]);
         end
+        if dKf == 0; dKf = sqrt(var(dcut(:))); end
+        
         
     % -- For a local kf finder at a specific kf-index using findpeaks()
     elseif kfType == "local - findpeaks()"

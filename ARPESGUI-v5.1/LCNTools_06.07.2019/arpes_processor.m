@@ -548,6 +548,7 @@ handles = edit_xLims_Callback(handles.edit_xLims, [], handles);
 handles = edit_yLims_Callback(handles.edit_yLims, [], handles);
 handles = edit_zLims_Callback(handles.edit_zLims, [], handles);
 handles = edit_ScanNum_Callback(handles.edit_ScanNum, [], handles);
+handles = edit_eWin_Callback(handles.edit_eWin, [], handles);
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -1227,6 +1228,8 @@ function popupmenu_isoType_Callback(hObject, ~, handles)
 contents = cellstr(get(hObject,'String'));
 handles.fig_args{3} = string(contents{get(hObject,'Value')});
 fprintf("--> isoType: " + handles.fig_args{3} + " \n");
+%% 2 - Updating iso-slice values
+handles = edit_isoSlice_Callback(handles.edit_isoSlice, [], handles, 0);
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -1526,6 +1529,7 @@ if isempty(answer) || string(answer) == "No"; return; end
 set(findall(handles.uipanel_IntNorm, '-property', 'enable'), 'enable', 'on');
 if handles.myData.Type ~= "Eb(k)"; set(handles.popupmenu_EbType, 'Enable', 'on'); end
 edit_yLims_Callback(handles.edit_yLims, [], handles);
+handles = edit_eWin_Callback(handles.edit_eWin, [], handles);
 %% Update the handles
 guidata(hObject, handles);
 
@@ -1563,7 +1567,7 @@ set(hObject,'Value', 1);
 guidata(hObject, handles);
 
 % --- Executes when changing the text
-function edit_eWin_Callback(hObject, ~, handles)
+function handles = edit_eWin_Callback(hObject, ~, handles)
 % hObject    handle to edit_ebWin (see GCBO)
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -1613,7 +1617,7 @@ function edit_intScale_Callback(hObject, ~, handles)
 data_entry = abs(round(str2num(get(hObject,'String')), 3));
 %% 2- Validity check
 if isempty(data_entry) || length(data_entry) > 1 || size(data_entry, 1) > 1
-    handles.norm_args{3} = 0.5; 
+    handles.norm_args{3} = 0.25; 
 else
     handles.norm_args{3} = data_entry;
 end
@@ -1633,7 +1637,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 %% 1 - Set the default parameters
-handles.norm_args{3} = 0.5; set(hObject,'String','0.5'); 
+handles.norm_args{3} = 0.25; set(hObject,'String','0.25'); 
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -1815,7 +1819,6 @@ function pushbutton_ExecuteConv_Callback(hObject, ~, handles)
 
 %% 1 - Executing the k-conversion operation
 handles.myData = convert_to_k(handles.myData, handles.conv_args);
-view_data(handles.myData, handles.fig_args);
 %% 2 - Updating UI elements
 if handles.myData.Type == "Eb(kx,ky)" || handles.myData.Type == "Eb(kx,kz)"
     [~, ~, ~, dField] = find_data_fields(handles.myData);
@@ -1824,11 +1827,13 @@ if handles.myData.Type == "Eb(kx,ky)" || handles.myData.Type == "Eb(kx,kz)"
     % -- Updating the 3D plot limits
     handles = popupmenu_3Dtype_Callback(handles.popupmenu_3Dtype, [], handles);
     handles = edit_3DLimits_Callback(handles.edit_3DLimits, [], handles);
+    handles = edit_isoSlice_Callback(handles.edit_isoSlice, [], handles, 0);
 end
 handles = edit_xLims_Callback(handles.edit_xLims, [], handles);
 handles = edit_yLims_Callback(handles.edit_yLims, [], handles);
 handles = edit_zLims_Callback(handles.edit_zLims, [], handles);
-
+%% 3 - View data
+view_data(handles.myData, handles.fig_args);
 %% Update the handles
 guidata(hObject, handles);
 
@@ -2581,6 +2586,7 @@ function dataStr = normalise_data(dataStr, norm_args)
 %
 %   REQ. FUNCTIONS:
 %   -   [xField, yField, zField, dField] = find_data_fields(dataStr);
+%   -   DataC=SetContrast(Data,minFrac,maxFrac [,gamma]);
 %
 %   IN:
 %   -   dataStr:            data structure of the ARPES data.
@@ -2627,14 +2633,14 @@ for i = 1:size(dataStr.(dField), 3)
             dataStr.data(j,:,i) = dataStr.(dField)(j,:,i) ./ DSlice1;
         end        
     elseif norm_type == "max"
-        dataStr.data(:,:,i) = dataStr.(dField)(:,:,i) / max(DSlice1(:));
+        dataStr.data(:,:,i) = dataStr.(dField)(:,:,i) / max(max(dataStr.(dField)(:,:,i)));
     elseif norm_type == "mean"
         dataStr.data(:,:,i) = dataStr.(dField)(:,:,i) / mean(DSlice1(:));
     elseif norm_type == "global max"
         dataStr.data = dataStr.(dField) / max(max(max(dataStr.(dField))));
     end
     % - Subtracting angle integrated spectrum
-   if edcScale ~= 0
+   if edcScale ~= 0 && norm_type ~= "global max"
         [~, ISubtr] = Cut(dataStr.(xField)(:,:,i), dataStr.(yField)(:,:,i), dataStr.(dField)(:,:,i), 'edc', xRange);
         for j = 1:size(dataStr.(dField), 2)
             dataStr.data(:,j,i) = dataStr.(dField)(:,j,i) - edcScale * ISubtr;
@@ -2649,6 +2655,10 @@ dataStr.data = dataStr.data / max(max(max(dataStr.data)));
 dataStr.meta.norm_args = norm_args;
 %-Setting NaN values to zero
 dataStr.data(isnan(dataStr.data)) = 0;
+% - Setting the contrast
+for i = 1:size(dataStr.(dField), 3)
+    dataStr.data(:,:,i) = SetContrast(dataStr.data(:,:,i),0.05,1.);
+end
 %% Close wait-bar
 close(wbar);
 
@@ -3306,10 +3316,11 @@ vidObj = VideoWriter(fname);
 vidObj.FrameRate = 10;
 open(vidObj);
 %% 2 - Running the Eb(k) vs scan parameter frame-by-frame
-figure();
+fig = figure();
 for f = 1:nFrames
     waitbar(f/nFrames, wbar, 'Plotting Eb(k) vs scan parameter video...', 'Name', 'view_ebkvideo');
     % - Reset the figure
+    fig;
     cla reset; clf reset; delete(findall(gcf,'type','annotation'))
     % - Extracting the scan parameter for the given frame
     if dataStr.Type == "Eb(kx,ky)" 
@@ -3339,6 +3350,7 @@ for f = 1:nFrames
             ImData(dataStr.(xField), dataStr.(yField), dataStr.(dField)(:,:,f));
         end
     end
+    if view3D_args{4} == 1; axis square; end
     % - 2.5 - Formatting the figure
     minC = min(min(min(dataStr.(dField)(:,:,f))));
     maxC = max(max(max(dataStr.(dField)(:,:,f))));
@@ -3347,7 +3359,7 @@ for f = 1:nFrames
     gca_properties(string(xField));
     title(dataStr.H5file, 'interpreter', 'none', 'fontsize', 14);
     % - 2.6 - Adding text for the scan parameter
-    annotation('textbox', [0.22 0.2 0.17 0.06], 'String',scanVal, 'FitBoxToText','on',...
+    annotation('textbox', [0.25 0.2 0.17 0.06], 'String',scanVal, 'FitBoxToText','on',...
         'color', [0 0 0], 'fontsize', 13, 'backgroundcolor', [1 1 1], 'facealpha', 0.80,...
         'linewidth', 2, 'horizontalalignment', 'center', 'verticalalignment', 'middle',...
         'interpreter', 'latex');
@@ -3404,7 +3416,6 @@ open(vidObj);
 %% 2 - Running the Eb(k) vs scan parameter frame-by-frame
 figure();
 for f = 1:nFrames
-    waitbar(f/nFrames, wbar, 'Plotting Eb(k) vs scan parameter zoomed video...', 'Name', 'view_ebkvideo_zoom');
     % - Reset the figure
     cla reset; clf reset; delete(findall(gcf,'type','annotation')); hold on;
     % - Extracting the scan parameter for the given frame
@@ -3443,6 +3454,7 @@ for f = 1:nFrames
     axis([min(dataStr.(xField)(:)), max(dataStr.(xField)(:)), min(dataStr.(yField)(:)), max(dataStr.(yField)(:))]);
     gca_properties(string(xField));
     title(dataStr.H5file, 'interpreter', 'none', 'fontsize', 14);
+    if view3D_args{4} == 1; axis square; end
     % - 2.3 - Adding text for the scan parameter
     annotation('textbox', [0.22 0.2 0.17 0.06], 'String',scanVal, 'FitBoxToText','on',...
         'color', [0 0 0], 'fontsize', 13, 'backgroundcolor', [1 1 1], 'facealpha', 0.80,...
@@ -3489,6 +3501,7 @@ for f = 1:nFrames
         new_ax.XAxisLocation = 'bottom';
         new_ax.YAxisLocation = 'right';
     end
+    if view3D_args{4} == 1; axis square; end
    %% Adding the current figure as a frame to the video dataObject
     mov = getframe(gcf);          %add current figure as frame
     writeVideo(vidObj,mov);     %write frame to vidObj
@@ -3524,7 +3537,6 @@ fname = char(string(save_filepath) + string(save_filename));
 if isequal(save_filepath,0) || isequal(save_filename,0); return; end
 % Else proceed with the video plotting
 disp('-> Eb(k) vs scan parameter video...')
-wbar = waitbar(0., 'Plotting slice video...', 'Name', 'view_slicevideo');
 
 %% Default parameters
 % - Extracting the fields to be used with most recent processing
@@ -3558,14 +3570,14 @@ vidObj = VideoWriter(fname);
 vidObj.FrameRate = 10;
 open(vidObj);
 % - Open and freeze the figure axes
-figure();
+fig = figure();
 
 %% 2 - Running the slice video frame by frame
 for f = 1:nFrames 
-    waitbar(f/nFrames, wbar, 'Plotting slice video...', 'Name', 'view_slicevideo');
     % - Finding the next iteration of the slice window
     Win = iWin-(f-1)*2*stepsize;
     % - Reset the figure
+    fig;
     cla reset; clf reset; delete(findall(gcf,'type','annotation'))
     % - Extracting the mean slice range as a string
     if view3D_args{1} == "isoe video"; scanVal =  sprintf('$$ \\bf E_B = %.3f eV $$', mean(Win));
@@ -3642,8 +3654,6 @@ for f = 1:nFrames
     writeVideo(vidObj,mov);     %write frame to vidObj
 end
 close(vidObj);
-%% Close wait-bar
-close(wbar);
 
 % --- IsoK or IsoE video - *Eb(kx,ky) or Eb(kx,kz) scans only*
 function view_slice_and_ebk_video(dataStr, view3D_args)
@@ -3720,8 +3730,8 @@ fig = figure(); set(fig, 'Position', [1,1,850,450]);
 
 %% 3 - Running the slice + eb(k) video frame by frame
 for f = 1:nFrames 
-    waitbar(f/nFrames, wbar, 'Plotting slice + Eb(k) video...', 'Name', 'view_slice_and_ebk_video');
     % - Reset the figure
+    fig;
     cla reset; clf reset; delete(findall(gcf,'type','annotation'))
     % - Extracting the scan parameter for the given frame
     if dataStr_scans.Type == "Eb(kx,ky)" 

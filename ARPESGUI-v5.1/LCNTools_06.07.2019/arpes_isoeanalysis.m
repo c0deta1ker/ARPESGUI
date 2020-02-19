@@ -22,7 +22,7 @@ function varargout = arpes_isoeanalysis(varargin)
 
 % Edit the above text to modify the response to help arpes_isoeanalysis
 
-% Last Modified by GUIDE v2.5 01-Aug-2019 12:34:59
+% Last Modified by GUIDE v2.5 22-Nov-2019 20:42:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -172,6 +172,7 @@ function pushbutton_TRANSFER_Callback(hObject, ~, handles)
 if isfield(handles, 'myData'); assignin('base','arpes_data',handles.myData);end
 if isfield(handles, 'myBZ'); assignin('base','arpes_bz',handles.myBZ); end
 if isfield(handles, 'myLPs'); assignin('base','arpes_lp',handles.myLPs); end
+if isfield(handles, 'mySAs'); assignin('base','arpes_sa',handles.mySAs); end
 
 % --- Executes on button press in pushbutton_INFO.
 function pushbutton_INFO_Callback(hObject, ~, handles)
@@ -192,6 +193,9 @@ if isfield(handles, 'myBZ')
 end
 if isfield(handles, 'myLPs')
     fprintf("Line Profiles (.myLPs) : \n"); disp(handles.myLPs);
+end
+if isfield(handles, 'mySAs')
+    fprintf("Surface Areas (.mySAs) : \n"); disp(handles.mySAs);
 end
 
 % --- Executes on button press in pushbutton_LOAD.
@@ -288,9 +292,14 @@ if isfield(handles, 'myBZ')
     print(fig_full, char(save_fullfile(1:end-4)+"_isoe.png"), '-dpng');
 end
 if isfield(handles, 'myLPs')
-    view_appended_LP(handles.myData, handles.myLPs, handles.myBZ.overlay, handles.final_fig_args);
+    fig_lp = view_appended_LP(handles.myData, handles.myLPs, handles.myBZ.overlay, handles.final_fig_args);
     title(save_filename(1:end), 'interpreter', 'none');
-    print(fig_full, char(save_fullfile(1:end-4)+"_lineProfs.png"), '-dpng');
+    print(fig_lp, char(save_fullfile(1:end-4)+"_LPs.png"), '-dpng');
+end
+if isfield(handles, 'mySAs')
+    fig_sa = view_appended_SA(handles.myData, handles.mySAs, handles.myBZ.overlay, handles.final_fig_args);
+    title(save_filename(1:end), 'interpreter', 'none');
+    print(fig_sa, char(save_fullfile(1:end-4)+"_SAs.png"), '-dpng');
 end
 
 % --- Executes on button press in pushbutton_RESET.
@@ -1412,7 +1421,7 @@ elseif length(data_entry) > 1
     data_entry = data_entry(1);
 % - If a double entry is made, ensure it does not exceed the max / min limits
 elseif length(data_entry) == 1
-    data_entry(1) = round(data_entry, 2);
+    data_entry(1) = round(data_entry, 3);
 end
 %% 3 - Assigning output and printing change
 handles.isocorr.origin_args{1}  = round(data_entry, 3);
@@ -1452,7 +1461,7 @@ elseif length(data_entry) > 1
     data_entry = data_entry(1);
 % - If a double entry is made, ensure it does not exceed the max / min limits
 elseif length(data_entry) == 1
-    data_entry(1) = round(data_entry, 2);
+    data_entry(1) = round(data_entry, 3);
 end
 %% 3 - Assigning output and printing change
 handles.isocorr.origin_args{2}  = round(data_entry, 3);
@@ -2708,6 +2717,49 @@ set(hObject,'String', string(handles.sa_args{2}));
 %% Update handles structure
 guidata(hObject, handles);
 
+% --- Executes when changing the text
+function edit_preSmooth_Callback(hObject, ~, handles)
+% hObject    handle to edit_preSmooth (see GCBO)
+% handles    structure with handles and user data (see GUIDATA)
+
+%% 1 - Extracting the input defined by user
+data_entry = round(str2num(strrep(get(hObject,'String'),',',' ')), 2);
+%% 2 - Validity check of user input
+ % - If no entry is made, default to a given value
+if isempty(data_entry) || length(data_entry) > 2
+    data_entry = [0.5, 0.5];
+% - If a single entry is made, make a row vector that is identical
+elseif length(data_entry) == 1
+    data_entry = [data_entry, data_entry];
+end
+%% 3 - Assigning output and printing change
+handles.sa_args{3} = data_entry;
+if handles.isocorr.filter_args{1} == "LaplaceFlt2"
+    set(hObject,'String', string(handles.isocorr.filter_args{2})); 
+    fprintf("--> "+ get(handles.staticstext_FilterParam, 'string')+" "+string(handles.isocorr.filter_args{2}) + " \n");
+else
+    set(hObject,'String', string(handles.sa_args{3}(1) + "," + handles.sa_args{3}(2))); 
+    fprintf("--> pre-smoothing factors (Gaco2) "+ string(handles.sa_args{3}(1) + "," + handles.sa_args{3}(2)) + " \n");
+end
+%% Update handles structure
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit_preSmooth_CreateFcn(hObject, ~, handles)
+% hObject    handle to edit_preSmooth (see GCBO)
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%% Set default parameters
+handles.sa_args{3} = [0.5, 0.5]; 
+set(hObject,'String', string(handles.sa_args{3}(1) + "," + handles.sa_args{3}(2))); 
+%% Update handles structure
+guidata(hObject, handles);
+
 % --- Executes on button press in pushbutton_ExtractSAs.
 function pushbutton_ExtractSAs_Callback(hObject, ~, handles)
 % hObject    handle to pushbutton_ExtractSAs (see GCBO)
@@ -2720,8 +2772,8 @@ fig = figure(); set(fig, 'Name', 'Iso-Slice', 'Position', [1,1,700,750]);
 if isfield(handles, 'myBZ'); view_final(handles.myData, handles.myBZ.overlay, final_fig_args);    
 else; view_final(handles.myData, [], final_fig_args);
 end
-%% 2 - Determination of the Luttinger Area
-handles.myData = surface_area_extraction(handles.myData, handles.sa_args);
+%% 2 - Extracting the surface area to the temporary data structure
+handles.tempSA = surface_area_extraction(handles.myData, handles.sa_args);
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -2732,8 +2784,28 @@ function pushbuttonAppendSAs_Callback(hObject, ~, handles)
 
 %% 1 - Creating surface-area data structure if necessary
 if ~isfield(handles, 'mySAs');  handles.mySAs = {}; end
-%% 2 - Appending the line-profile to the data structure
-handles.mySAs{end+1} = handles.tempSA;
+%% 2 - Appending the surface area to the data structure
+% If there are no SAs stored, append the SA
+if isempty(handles.mySAs)
+    handles.mySAs{end+1} = handles.tempSA;
+    fprintf("-> SA appended - unique...\n");
+else
+   % Checking for any identical contours
+    break_point = 0;
+    for i = 1:length(handles.mySAs)
+        if handles.mySAs{i}.sa_args{1} == handles.tempSA.sa_args{1} && handles.mySAs{i}.sa_args{2} == handles.tempSA.sa_args{2} && handles.mySAs{i}.sa_args{3} == handles.tempSA.sa_args{3}
+            break_point = 1;
+        end
+    end    
+    % If it is unique, append it
+    if break_point == 0
+        handles.mySAs{end+1} = handles.tempSA;
+        fprintf("-> SA appended - unique...\n");
+     % If the same line-profile already exists in the LP cell, do not append
+    elseif break_point == 1
+        fprintf("-> SA not appended - already stored...\n");
+    end
+end
 %% Update handles structure
 guidata(hObject, handles);
 
@@ -2758,8 +2830,7 @@ function pushbutton_ViewSAs_Callback(hObject, ~, handles)
 % hObject    handle to pushbutton_ViewSAs (see GCBO)
 % handles    structure with handles and user data (see GUIDATA)
 
-
-
+view_appended_SA(handles.myData, handles.mySAs, handles.myBZ.overlay, handles.final_fig_args);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3119,7 +3190,7 @@ for i = isocorr_args.file
     % - Subtracting to make the background zero
     dataStr{i}.isoe.DSlice = dataStr{i}.isoe.DSlice - min(dataStr{i}.isoe.DSlice(:));
 end
-%% 2 - Normalising maximum to unity
+%% 2 - Normalising maximum to initial maximum of data
 for i = 1:length(dataStr); norm_const(i) = max(dataStr{i}.isoe.DSlice(:)); end
 norm_const = max(norm_const(:));
 for i = 1:length(dataStr)
@@ -3987,7 +4058,7 @@ if plotFig == 1
 end
 
 % ---  Function to extract the surface area over a region of interest
-function dataStr = surface_area_extraction(dataStr, sa_args)
+function saStr = surface_area_extraction(dataStr, sa_args)
 % dataStr = surface_area_extraction(dataStr, sa_args)
 %   This function determines the area over some threshold that is defined
 %   by the user, which can be used to sub-sequentially determine the
@@ -4008,26 +4079,24 @@ function dataStr = surface_area_extraction(dataStr, sa_args)
 %   .(isoe.areaThresh):       the area over the defined data threshold.
 %   .(isoe.rho_LV):               estimation of the number density based on the threshold.
 
-disp('Luttinger Area determination...')
+disp('Surface Area determination...')
 
+saStr.sa_args = sa_args;
 %% 1 - Determination of the maximum value of the intensity over all isoe scans
 for i = 1:length(dataStr); max_d(i) = max(dataStr{i}.isoe.DSlice(:)); end
 max_d = max(max_d(:));
 
 %% 2 - Iterating through all the data structures
+areaCont = [];
+xCont = {};
+yCont = {};
 for i = 1:length(dataStr)
-    %% Initialisation
-    if isfield(dataStr{i}.isoe, 'xScan'); dataStr{i}.isoe = rmfield(dataStr{i}.isoe, 'xScan'); end
-    if isfield(dataStr{i}.isoe, 'yScan'); dataStr{i}.isoe = rmfield(dataStr{i}.isoe, 'yScan'); end
-    if isfield(dataStr{i}.isoe, 'areaScan'); dataStr{i}.isoe = rmfield(dataStr{i}.isoe, 'areaScan'); end
-    if isfield(dataStr{i}.isoe, 'xCont'); dataStr{i}.isoe = rmfield(dataStr{i}.isoe, 'xCont'); end
-    if isfield(dataStr{i}.isoe, 'yCont'); dataStr{i}.isoe = rmfield(dataStr{i}.isoe, 'yCont'); end
-    if isfield(dataStr{i}.isoe, 'areaCont'); dataStr{i}.isoe = rmfield(dataStr{i}.isoe, 'areaCont'); end
-    
     % -- Defining the x-, y- and z-matrices
     x = dataStr{i}.isoe.XSlice;
     y = dataStr{i}.isoe.YSlice;
     d = dataStr{i}.isoe.DSlice;
+    % -- Pre smooth the data if required
+    d = Gaco2(d, sa_args{3}(1), sa_args{3}(2)); 
     
     %% 2.1 - Calculating the total area of the ARPES scan
     % -- Determination of the total area of the ARPES scan
@@ -4036,9 +4105,9 @@ for i = 1:length(dataStr)
     [k, area] = boundary(x_vect, y_vect, 0.5);
     plot(x_vect(k),y_vect(k), '-', 'color', [0,0.8,0.8,0.8], 'linewidth', 2);
     % -- Assigning the values to the data-structure
-    dataStr{i}.isoe.xScan = x_vect(k);
-    dataStr{i}.isoe.yScan = y_vect(k);
-    dataStr{i}.isoe.areaScan = area;
+    xScan = x_vect(k);
+    yScan = y_vect(k);
+    areaScan = area;
     
     %% 2.2 - Calculating the contour threshold of the IsoE surface
     % - Extracting and plotting the filled contour plot
@@ -4068,23 +4137,30 @@ for i = 1:length(dataStr)
     indx = find(areaThresh > sa_args{1});
     j = 1;
     for n = indx
-        dataStr{i}.isoe.xCont{j} = xx{n};
-        dataStr{i}.isoe.yCont{j} = yy{n};
-        dataStr{i}.isoe.areaCont(j) = areaThresh(n);
+        xCont{j} = xx{n};
+        yCont{j} = yy{n};
+        areaCont(j) = areaThresh(n);
         j = j + 1;
     end
-    dataStr{i}.isoe.areaThresh = sum(dataStr{i}.isoe.areaCont(:));
+    areaThresh = sum(areaCont(:));
     %% 4 - Plotting the contours that are used
-    for n = 1:length(dataStr{i}.isoe.areaCont)
-        plot(dataStr{i}.isoe.xCont{n}, dataStr{i}.isoe.yCont{n}, 'color', [0.1,0.7,0.1], 'linewidth', 2, 'linestyle', '-');
+    for n = 1:length(areaCont)
+        plot(xCont{n}, yCont{n}, 'color', [0.1,0.7,0.1], 'linewidth', 2, 'linestyle', '-');
     end
+    %% 5 - Assigning to data structure
+    saStr.XSlice = x;
+    saStr.YSlice = y;
+    saStr.DSlice = d;
+    saStr.xScan{i} = xScan;
+    saStr.yScan{i} = yScan;
+    saStr.areaScan{i} = areaScan;
+    saStr.xCont{i} = xCont;
+    saStr.yCont{i} = yCont;
+    saStr.areaCont{i} = areaCont;
 end
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% INTERNAL PLOT FUNCTIONS %%%%%%%%%%%%%%%%
-function view_initial_figure(dataStr, fig_args)
-
 % ---  Function to plot the final 2D figure of the isoe data
 function view_final(dataStr, bzStr, final_fig_args)
 % view_final(dataStr, bzStr, final_fig_args)
@@ -4296,6 +4372,7 @@ for f = 1:nFrames
     end
     %% 2.5 Applying color and axes limits, grid- and axes-lines
     axis equal;
+    cLims = [min(DSlice{i}(:)), max(DSlice{i}(:))];
     colormap(cMap); caxis(cLims); axis(axLims);
     if axisOn == 1 
         line([0 0], [-1e5, 1e5], 'Color', axCol, 'LineWidth', 1, 'Linestyle', '--');
@@ -4470,7 +4547,7 @@ ax.LineWidth = 1.5;
 ax.Box = 'on'; ax.Layer = 'Top';
 
 % ---  Function to plot appended line-profiles
-function view_appended_LP(dataStr, lpStr, bz_overlay, final_fig_args)
+function fig = view_appended_LP(dataStr, lpStr, bz_overlay, final_fig_args)
 
 %% 1 - Plotting the ARPES IsoE slice
 fig = figure(); 
@@ -4550,6 +4627,35 @@ for i = 1:length(lpStr)
     ax.Box = 'on'; ax.Layer = 'Top';
 end
 
+% ---  Function to plot appended line-profiles
+function fig = view_appended_SA(dataStr, saStr, bz_overlay, final_fig_args)
 
+%% 1 - Plotting the ARPES IsoE slice
+fig = figure(); 
+set(fig, 'Name', 'Surface Area Determination', 'Position', [1,1,800,450]);
+hold on;
+view_final(dataStr, bz_overlay, final_fig_args);    
+% - Re-formatting the figure
+colorbar off;
+for i = 1:length(dataStr)
+    xTemp(i,:) = dataStr{i}.isoe.xLims;
+    yTemp(i,:) = dataStr{i}.isoe.yLims;
+end
+xLims(1) = min(min(xTemp)); xLims(2) = max(max(xTemp));
+yLims(1) = min(min(yTemp)); yLims(2) = max(max(yTemp));
+axis([xLims, yLims]);
+title('IsoE slice');
+
+%% 2 - Plotting all the iso-contours
+for i = 1:length(saStr)
+    for j = 1:length(dataStr)
+        for n = 1:length(saStr{i}.areaCont{j})
+            col = rand(1,3);
+            plot(saStr{i}.xCont{j}{n}, saStr{i}.yCont{j}{n}, 'color', col, 'linewidth', 2, 'linestyle', '-');
+            text(max(saStr{i}.xCont{j}{n}(:)), max(saStr{i}.yCont{j}{n}(:)), char(sprintf('%i,%i,%i', i, j, n)),...
+                'horizontalalignment', 'center', 'fontsize', 12, 'color', col);
+        end
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% The End %%%%%%%%%%%%%%%%%%%
