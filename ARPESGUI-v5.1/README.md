@@ -3,6 +3,7 @@
 -> When saving on the 'arpes_processor' UI, it will now automatically also save an info .txt file.
 -> Added new method in 'kf_analysis' that will track states by measuring the full-width at half-maximum as a function of a scan parameter. This method allowed for kF to be tracked automatically using the algorithm, with the user only defining the region of interest.
 -> Added feature in 'kf_analysis' that will plot a summary video showing the fits as a function of the scan parameter.
+-> Merged to master branch.
 
 **v5.0 - 06.02.2019:** Further development of the 'arpes_statefitting' UI;  
 	-> Added Voigt curve that can be fitted.
