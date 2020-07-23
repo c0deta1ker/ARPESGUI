@@ -28,7 +28,7 @@ Allows the user to load in single or multiple processed ARPES data-files so that
 
 
 ## Version control  
-MATLAB version:   2019a  
+MATLAB version:   2020a  
 MATLAB add-ons:   Curve Fitting Toolbox  
 
 ## Authors  
@@ -36,7 +36,7 @@ ARPESGUI & LCNTools:
 **Procopios Constantinou**,  
 London Centre for Nanotechnology (LCN),  
 University College London (UCL).  
-email: procopios.constantinou.16@ucl.ac.uk 
+email: procopios.constantinou.16@ucl.ac.uk
 
 MATools functions:  
 **Vladimir Strocov**,  
@@ -48,4 +48,4 @@ email: vladimir.strocov@psi.ch
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.md](LICENSE.md) file for details.
 
 
---PCC Nov. 2019
+--PCC July 2020
