@@ -10,7 +10,7 @@ A MATLAB GUI used for the analysis of soft x-ray angle-resolved photoemission sp
 ## Analysis tools
 **ARPESGUI**:
 The main menu for all ARPES analysis software in MATLAB, which allows the navigation to and from any piece of analysis UI.  
-![00_ARPESGUI](https://github.com/c0deta1ker/ARPESGUI/tree/master/ARPESGUI-v6.0/LCNTools_17.07.2020/0_ReadMeImages/00_ARPESGUI.png)
+![00_ARPESGUI](ARPESGUI-v6.0/LCNTools_17.07.2020/0_ReadMeImages/00_ARPESGUI.png)
 
 **Brilluoin Zone Navigation**:
 Allows the user to define any crystal geometry and to determine the Wigner-Seitz cell in real-space and the First Brilluoin-Zone in reciprocal space. Additionally, by defining the crystal planes (100), (010) or (001), planar cuts through the stacked Brillouin-Zone can be determined, which is important in the interpretation of ARPES spectra. By imposing the ARPES geometry and experimental variables, the user can define the photon energy being used and extract the ARPES cut/slice being probed through the 2D Brillouin-Zone. This is very useful when it comes to finding what photon energies are needed to probe certain high-symmetry lines or valleys.  
