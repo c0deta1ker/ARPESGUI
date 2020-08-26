@@ -5,7 +5,8 @@ A MATLAB GUI used for the analysis of soft x-ray angle-resolved photoemission sp
 ## Installation  
 1. Download the *ARPESGUI* repository.
 2. Open MATLAB and use *Set Path* in the *Home* tab to add the *ARPESGUI* repository and all its sub-folders into its saved search paths.
-3. Type *ARPESGUI* in the MATLAB command prompt to boot up the GUI.
+3. Make sure you also use *Set Path* to add the repository / folder that contains all of the ARPES data to be loaded in to *ARPESGUI*.
+4. Type *ARPESGUI* in the MATLAB command prompt to boot up the GUI.
 
 ## Analysis tools
 **ARPESGUI**:
